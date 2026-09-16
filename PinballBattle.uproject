@@ -1,16 +1,40 @@
 {
-    "FileVersion": 3,
-    "EngineAssociation": "5.8",
-    "Category": "Games",
-    "Description": "A reusable pinball framework with themed arcade interludes.",
-    "Modules": [
-        { "Name": "PinballBattle", "Type": "Runtime", "LoadingPhase": "Default" }
-    ],
-    "Plugins": [
-        { "Name": "EnhancedInput", "Enabled": true },
-        { "Name": "Niagara", "Enabled": true },
-        { "Name": "PythonScriptPlugin", "Enabled": true, "TargetAllowList": ["Editor"] },
-        { "Name": "EditorScriptingUtilities", "Enabled": true, "TargetAllowList": ["Editor"] }
-    ],
-    "TargetPlatforms": ["Windows"]
+	"FileVersion": 3,
+	"EngineAssociation": "{336C3C07-4306-6E64-2C39-7E873CF47455}",
+	"Category": "Games",
+	"Description": "A reusable pinball framework with themed arcade interludes.",
+	"Modules": [
+		{
+			"Name": "PinballBattle",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "EnhancedInput",
+			"Enabled": true
+		},
+		{
+			"Name": "Niagara",
+			"Enabled": true
+		},
+		{
+			"Name": "PythonScriptPlugin",
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
+		},
+		{
+			"Name": "EditorScriptingUtilities",
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
+		}
+	],
+	"TargetPlatforms": [
+		"Windows"
+	]
 }

@@ -1,0 +1,51 @@
+#include "UI/PrototypeControlsWidget.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/CanvasPanel.h"
+#include "Components/CanvasPanelSlot.h"
+#include "Components/VerticalBox.h"
+#include "Components/TextBlock.h"
+#include "Framework/PinballGameModeBase.h"
+#include "Pinball/PinballTable.h"
+#include "Pinball/PinballPlunger.h"
+#include "Engine/World.h"
+
+void UPrototypeControlsWidget::NativeOnInitialized()
+{
+    Super::NativeOnInitialized();
+    SetVisibility(ESlateVisibility::HitTestInvisible);
+    UCanvasPanel* Canvas = WidgetTree->ConstructWidget<UCanvasPanel>();
+    WidgetTree->RootWidget = Canvas;
+    UVerticalBox* Column = WidgetTree->ConstructWidget<UVerticalBox>();
+    UCanvasPanelSlot* CanvasSlot = Canvas->AddChildToCanvas(Column);
+    CanvasSlot->SetPosition(FVector2D(32, 48));
+    CanvasSlot->SetSize(FVector2D(310, 500));
+    auto AddText = [&](const FText& Text, int32 Size, FLinearColor Color)
+    {
+        UTextBlock* Label = WidgetTree->ConstructWidget<UTextBlock>();
+        Label->SetText(Text);
+        FSlateFontInfo Font = Label->GetFont();
+        Font.Size = Size;
+        Label->SetFont(Font);
+        Label->SetColorAndOpacity(FSlateColor(Color));
+        Label->SetAutoWrapText(true);
+        Column->AddChildToVerticalBox(Label);
+        return Label;
+    };
+    AddText(Heading, 28, FLinearColor(.25f, .85f, 1.f));
+    AddText(Instructions, 18, FLinearColor(.85f, .9f, .95f));
+    Status = AddText(FText::GetEmpty(), 21, FLinearColor(1.f, .8f, .3f));
+}
+
+void UPrototypeControlsWidget::NativeTick(const FGeometry& Geometry, float DeltaSeconds)
+{
+    Super::NativeTick(Geometry, DeltaSeconds);
+    const APinballGameModeBase* Mode = GetWorld()->GetAuthGameMode<APinballGameModeBase>();
+    if (!Status || !Mode || !Mode->GetTable()) return;
+    const APinballPlunger* Plunger = Mode->GetTable()->Plunger;
+    FString Text = TEXT("Ball in play");
+    if (Mode->CanLaunch()) Text = Plunger->IsCharging()
+        ? FString::Printf(TEXT("Launch power: %d%%"), FMath::RoundToInt(100.f * Plunger->GetChargeAlpha()))
+        : TEXT("Ready to launch");
+    else if (!Mode->CanPlay()) Text = TEXT("Preparing next ball...");
+    Status->SetText(FText::FromString(Text));
+}

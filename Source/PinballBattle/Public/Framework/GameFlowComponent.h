@@ -7,7 +7,7 @@
 
 class APinballGameStateBase;
 
-/** Sole state writer; Phase 1 establishes BOOT without enabling an unfinished session. */
+/** Sole state writer. GameMode requests guarded edges after their prerequisites succeed. */
 UCLASS()
 class PINBALLBATTLE_API UGameFlowComponent : public UActorComponent
 {
@@ -22,6 +22,7 @@ public:
 private:
     friend class APinballGameModeBase;
     void InitializeProjection(APinballGameStateBase* InGameState);
+    bool TransitionTo(EArcadeGameFlowState Next);
 
     UPROPERTY(Transient)
     TObjectPtr<APinballGameStateBase> GameState;

@@ -1,9 +1,15 @@
 ﻿# Quickstart and Validation Guide
 
-Phase 1 now supplies the C++ project, framework Blueprints, input assets and empty
-`L_PhysicsPrototype` map. See [setup validation](validation/setup.md) for executed commands
-and evidence. Later milestone commands/scenarios below remain prospective until their tasks
-are implemented. The empty foundation does not yet provide menus or ball gameplay.
+Phase 2 now supplies playable repeat-ball pinball in `L_PhysicsPrototype`: hold/release Down
+to launch, Left/Right to flip, and an automatic new ball after each drain. See
+[first-playable validation](validation/first-playable.md) for launch/build commands and the
+21-cycle, 30/60/120 FPS acceptance results. [Setup validation](validation/setup.md) records
+the earlier empty Phase 1 foundation. Scoring, three-ball sessions, pause and minigames remain
+prospective until their later tasks are implemented.
+
+To repeat the current rendered physics acceptance after building, run
+`./Scripts/Run-Phase2Validation.ps1`. The current Automation filter is
+`PinballBattle.Practice`; the later Score/Flow/Transition filters below are not implemented yet.
 
 ## Prerequisites and foundation
 
