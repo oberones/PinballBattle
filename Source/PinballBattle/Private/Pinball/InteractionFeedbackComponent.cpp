@@ -3,6 +3,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
 #include "GameFramework/Actor.h"
+#include "Components/AudioComponent.h"
 
 UInteractionFeedbackComponent::UInteractionFeedbackComponent()
 {
@@ -19,7 +20,16 @@ void UInteractionFeedbackComponent::Pulse()
 {
     Remaining = FMath::Clamp(FlashSeconds, .05f, .5f);
     if (Light) Light->SetIntensity(6000.f);
-    if (HitSound) UGameplayStatics::PlaySoundAtLocation(this, HitSound, GetOwner()->GetActorLocation(), .35f);
+    if (IsValid(ActiveSound)) ActiveSound->Stop();
+    if (HitSound) ActiveSound = UGameplayStatics::SpawnSoundAtLocation(this, HitSound, GetOwner()->GetActorLocation(), FRotator::ZeroRotator, .35f);
+}
+
+void UInteractionFeedbackComponent::ResetFeedback()
+{
+    Remaining = 0;
+    if (Light) Light->SetIntensity(0);
+    if (IsValid(ActiveSound)) ActiveSound->Stop();
+    ActiveSound = nullptr;
 }
 
 void UInteractionFeedbackComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTick)

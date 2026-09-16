@@ -148,6 +148,22 @@ void APinballTable::CancelActions()
     if (Plunger) Plunger->CancelActions();
 }
 
+void APinballTable::ResetForNewSession(FGuid SessionId)
+{
+    BallHandle.SessionId = SessionId;
+    ++PhysicalEpoch;
+    CancelActions();
+    RemoveBall();
+    BallHandle.BallId.Invalidate();
+    EventProtectionUntil = RecoveryRetryAt = 0;
+    LowMotionSeconds = 0;
+    RecoveryCount = 0;
+    for (int32& Count : InteractionCounts) Count = 0;
+    for (APinballBumper* Bumper : Bumpers) if (IsValid(Bumper)) Bumper->Feedback->ResetFeedback();
+    for (APinballScoringTarget* Target : Targets) if (IsValid(Target)) Target->Feedback->ResetFeedback();
+    for (APinballLane* Lane : Lanes) if (IsValid(Lane)) Lane->Feedback->ResetFeedback();
+}
+
 bool APinballTable::IsCurrentBall(const APinballBall* Ball) const
 {
     return IsValid(Ball) && Ball == CurrentBall;

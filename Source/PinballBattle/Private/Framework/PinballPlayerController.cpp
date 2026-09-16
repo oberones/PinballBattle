@@ -10,6 +10,10 @@
 #include "Blueprint/UserWidget.h"
 #include "Engine/World.h"
 #include "PinballBattle.h"
+#include "Framework/PinballGameStateBase.h"
+#include "Data/CabinetDefinition.h"
+#include "UI/PinballPresentationWidget.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 APinballPlayerController::APinballPlayerController()
 {
@@ -68,6 +72,9 @@ void APinballPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     CancelActions();
     if (ControlsWidget) ControlsWidget->RemoveFromParent();
+    if (Presentation) Presentation->RemoveFromParent();
+    if (auto* State = GetWorld()->GetGameState<APinballGameStateBase>())
+        State->OnSessionChanged.RemoveDynamic(this, &ThisClass::RefreshPresentation);
     if (UEnhancedInputLocalPlayerSubsystem* Input = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
     {
         if (CommonMappingContext)
@@ -88,7 +95,10 @@ void APinballPlayerController::ConfigureTable(APinballTable* InTable)
     if (!IsLocalController() || !Table) return;
     if (APinballControlPawn* ControlPawn = Cast<APinballControlPawn>(GetPawn())) ControlPawn->SetTable(Table);
     SetViewTarget(Table);
-    if (!ControlsWidget && Table->ControlsWidgetClass)
+    const auto* Mode = GetWorld()->GetAuthGameMode<APinballGameModeBase>();
+    if (auto* State = GetWorld()->GetGameState<APinballGameStateBase>())
+        State->OnSessionChanged.AddUniqueDynamic(this, &ThisClass::RefreshPresentation);
+    if (Mode && Mode->IsPracticeMode() && !ControlsWidget && Table->ControlsWidgetClass)
     {
         ControlsWidget = CreateWidget<UUserWidget>(this, Table->ControlsWidgetClass);
         if (ControlsWidget) ControlsWidget->AddToViewport();
@@ -100,6 +110,7 @@ void APinballPlayerController::SetupInputComponent()
     Super::SetupInputComponent();
     UEnhancedInputComponent* Input = Cast<UEnhancedInputComponent>(InputComponent);
     if (!ensure(Input && LeftFlipperAction && RightFlipperAction && PlungerAction)) return;
+    if (PauseAction) Input->BindAction(PauseAction, ETriggerEvent::Started, this, &ThisClass::RequestPauseIntent);
     Input->BindAction(LeftFlipperAction, ETriggerEvent::Started, this, &ThisClass::LeftPressed);
     Input->BindAction(LeftFlipperAction, ETriggerEvent::Completed, this, &ThisClass::LeftReleased);
     Input->BindAction(LeftFlipperAction, ETriggerEvent::Canceled, this, &ThisClass::LeftReleased);
@@ -128,3 +139,68 @@ void APinballPlayerController::RightPressed() { if (auto* P = Cast<APinballContr
 void APinballPlayerController::RightReleased() { if (auto* P = Cast<APinballControlPawn>(GetPawn())) P->SetRightHeld(false); }
 void APinballPlayerController::PlungerPressed() { if (auto* P = Cast<APinballControlPawn>(GetPawn())) P->BeginPlunger(); }
 void APinballPlayerController::PlungerReleased() { if (auto* P = Cast<APinballControlPawn>(GetPawn())) P->ReleasePlunger(); }
+
+void APinballPlayerController::SetGameplayInput(bool bEnabled)
+{
+    CancelActions();
+    if (auto* Input = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+    {
+        FModifyContextOptions Options;
+        Options.bForceImmediately = true;
+        Options.bIgnoreAllPressedKeysUntilRelease = true;
+        Input->RemoveMappingContext(PinballMappingContext, Options);
+        if (bEnabled) Input->AddMappingContext(PinballMappingContext, 0, Options);
+        // Preserve the common Escape action's ongoing press; flushing it would retrigger pause on resume.
+        Input->RequestRebuildControlMappings(Options, EInputMappingRebuildType::Rebuild);
+    }
+}
+
+void APinballPlayerController::RefreshPresentation(const FSessionState& State)
+{
+    if (!IsLocalController() || State.FlowState == LastPresentedState) return;
+    const auto Previous = LastPresentedState;
+    LastPresentedState = State.FlowState;
+    const bool bGameplay = State.FlowState == EArcadeGameFlowState::PINBALL_READY || State.FlowState == EArcadeGameFlowState::PINBALL_PLAYING;
+    // A normal launch preserves held flippers; menu boundaries require a fresh press.
+    if (!(Previous == EArcadeGameFlowState::PINBALL_READY && State.FlowState == EArcadeGameFlowState::PINBALL_PLAYING))
+        SetGameplayInput(bGameplay);
+    const auto* Mode = GetWorld()->GetAuthGameMode<APinballGameModeBase>();
+    const auto* Cabinet = Mode ? Mode->GetCabinet() : nullptr;
+    if (!Cabinet) return;
+    TSubclassOf<UPinballPresentationWidget> Class = Cabinet->HUDWidget;
+    if (State.FlowState == EArcadeGameFlowState::ATTRACT) Class = Cabinet->StartWidget;
+    if (State.FlowState == EArcadeGameFlowState::PAUSED) Class = Cabinet->PauseWidget;
+    if (State.FlowState == EArcadeGameFlowState::GAME_OVER) Class = Cabinet->GameOverWidget;
+    if (!Presentation || Presentation->GetClass() != Class)
+    {
+        if (Presentation) Presentation->RemoveFromParent();
+        Presentation = CreateWidget<UPinballPresentationWidget>(this, Class);
+        if (Presentation) Presentation->AddToViewport(10);
+    }
+    bShowMouseCursor = !bGameplay;
+    if (bGameplay) SetInputMode(FInputModeGameOnly());
+    else
+    {
+        FInputModeGameAndUI InputMode;
+        if (Presentation) InputMode.SetWidgetToFocus(Presentation->TakeWidget());
+        InputMode.SetHideCursorDuringCapture(false);
+        SetInputMode(InputMode);
+    }
+}
+
+void APinballPlayerController::RequestStartIntent()
+{
+    if (auto* Mode = GetWorld()->GetAuthGameMode<APinballGameModeBase>()) Mode->RequestNewSession();
+}
+
+void APinballPlayerController::RequestPauseIntent()
+{
+    if (auto* Mode = GetWorld()->GetAuthGameMode<APinballGameModeBase>()) Mode->RequestTogglePause(this);
+}
+
+void APinballPlayerController::RequestQuitIntent()
+{
+    if (auto* Mode = GetWorld()->GetAuthGameMode<APinballGameModeBase>()) Mode->InvalidateSession();
+    CancelActions();
+    UKismetSystemLibrary::QuitGame(this, this, EQuitPreference::Quit, false);
+}

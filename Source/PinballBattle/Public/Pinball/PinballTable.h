@@ -31,6 +31,8 @@ public:
     bool SpawnReadyBall();
     /** Unregister and destroy the current ball before a replacement can be created. */
     void RemoveBall();
+    /** Invalidate old contacts before removing actors and resetting this table for a new session. */
+    void ResetForNewSession(FGuid SessionId);
     /** Return actuators to neutral without firing a cancelled plunger. */
     void CancelActions();
     /** Check actor validity and explicit table ownership. */

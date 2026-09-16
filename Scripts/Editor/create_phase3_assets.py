@@ -245,7 +245,9 @@ wall("Right Rail", (320, 570, 32), (35, 1230, 90))
 wall("Top Rail", (0, 1180, 32), (670, 40, 90))
 wall("Launch Divider", (234, 490, 32), (25, 1050, 90))
 wall("Launch Guide", (252, 1110, 35), (150, 28, 95), -40)
-wall("Left Return Guide", (-235, 300, 30), (320, 26, 70), -40)
+# Trim the rail-side end while preserving the original flipper-side tip.
+wall("Left Return Guide", (-235 + 35 * math.cos(math.radians(40)),
+                           300 - 35 * math.sin(math.radians(40)), 30), (250, 26, 70), -40)
 wall("Right Return Guide", (164, 280, 30), (210, 26, 70), 48)
 wall("Upper Obstacle", (-155, 1015, 30), (150, 28, 70), 20)
 for actor in (left, right):

@@ -3,7 +3,7 @@
 #include "Data/PinballSessionTypes.h"
 #include "ScoringTypes.generated.h"
 
-/** Producers describe an interaction; the later score service chooses its point value. */
+/** Producers describe an interaction; the central score service chooses its point value. */
 UENUM(BlueprintType)
 enum class EScoringCategory : uint8 { Target, Bumper, Lane };
 
@@ -22,7 +22,7 @@ struct PINBALLBATTLE_API FScoringEvent
     UPROPERTY(BlueprintReadOnly) int64 PhaseEpoch = 0;
 };
 
-/** Read-only output of the future central score owner, never a producer-selected UI delta. */
+/** Read-only output of the central score owner, never a producer-selected UI delta. */
 USTRUCT(BlueprintType)
 struct PINBALLBATTLE_API FScoreAward
 {
