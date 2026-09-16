@@ -369,7 +369,9 @@ new wrapper class. Earlier deliverables remain runnable throughout later milesto
 - **Dependencies**: M10 and stable M9 behavior.
 - **Test/acceptance**: Run all SC-001–010, including five-person usability study and reference
   hardware frame pacing. Low/high bonus examples remain attainable; transitions stay below
-  freeze limit. Review shared dependency boundaries and all 17 user acceptance criteria.
+  freeze limit. Review shared dependency boundaries and all 29 story acceptance scenarios:
+  US1-AS1–AS7, US2-AS1–AS5, US3-AS1–AS3, US4-AS1–AS5, US5-AS1–AS3,
+  US6-AS1–AS3 and US7-AS1–AS3, using the identifiers defined in spec.md.
 - **End result**: Release-candidate first playable MVP with recorded results and any remaining
   defects disclosed. No completion claim until these checks actually pass.
 

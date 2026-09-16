@@ -11,8 +11,31 @@ Saved/
 *.suo
 *.VC.db
 *.VC.opendb
+PinballBattle.code-workspace
 
 # Local secrets
 .env
 .env.*
 !.env.example
+
+# Additional native build and editor artifacts
+.vscode/
+build/
+bin/
+obj/
+out/
+*.o
+*.so
+*.a
+*.exe
+*.dll
+*.pdb
+*.user
+*.log
+*.tmp
+*.swp
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+

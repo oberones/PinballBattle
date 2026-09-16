@@ -14,6 +14,10 @@ returning to the same pinball session.
 
 ## User Scenarios & Testing *(mandatory)*
 
+Acceptance scenarios are referenced as `USn-ASm`, where `n` is the user story number and
+`m` is its numbered acceptance scenario (for example, `US1-AS1`). Retain these identifiers
+when linking validation evidence.
+
 ### User Story 1 - Play a Complete Pinball Game (Priority: P1)
 
 As a player, I can start a game, launch a ball, operate both flippers, score on a recognizable
@@ -337,7 +341,10 @@ As a player, I can read my final score, restart a clean game, or quit the applic
 - **Minigame Run**: A single activation with an identity, starting conditions, local score,
   active time, objectives/lives status, and completion status, belonging to one session.
 - **Minigame Result**: The once-only outcome of a run, including the performance information
-  defined in FR-011 and the centrally calculated bonus shown to the player.
+  defined in FR-011. It contains no pinball bonus and does not change the shared score.
+- **Score Award**: The central scoring system's calculated award for an accepted table event
+  or minigame result. The minigame results presentation combines the performance result with
+  this award to show the actual bonus earned.
 
 ## Success Criteria *(mandatory)*
 

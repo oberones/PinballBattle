@@ -1,9 +1,9 @@
 ﻿# Quickstart and Validation Guide
 
-This guide describes commands and scenarios to use after the corresponding implementation
-milestones. The repository currently contains specifications and planning artifacts, not a
-.uproject, game code, maps or registered tests. Commands below are not claimed to work before
-those deliverables exist, and none was executed as part of planning.
+Phase 1 now supplies the C++ project, framework Blueprints, input assets and empty
+`L_PhysicsPrototype` map. See [setup validation](validation/setup.md) for executed commands
+and evidence. Later milestone commands/scenarios below remain prospective until their tasks
+are implemented. The empty foundation does not yet provide menus or ball gameplay.
 
 ## Prerequisites and foundation
 
@@ -14,9 +14,10 @@ those deliverables exist, and none was executed as part of planning.
 - M1 creates `PinballBattle.uproject` as a blank C++ desktop project in the existing repository,
   preserving `.specify`, `.agents`, `.codex` and `specs`. Enable Enhanced Input and Niagara;
   development test support uses Automation/FunctionalTesting. Do not add unrelated templates.
-- M1 configures startup map `/Game/Cabinets/AlienInvasion/Maps/L_AlienCabinet`, project GameMode,
-  collision channels, and soft-reference cook rules. M5 adds test maps and tests. M6–M8 add
-  the production minigame maps. Shipping excludes `/Game/Tests`.
+- Phase 1 configures `/Game/Tests/Maps/L_PhysicsPrototype` as the startup map with the project
+  GameMode and collision channels, following the first-playable task ordering. T036 switches
+  startup to `/Game/Cabinets/AlienInvasion/Maps/L_AlienCabinet`. M5 adds transition test maps;
+  M6–M8 add production minigame maps. T092 configures shipping cook exclusions for `/Game/Tests`.
 - M1 configures Git LFS for .uasset/.umap, if available in the team's Git setup, before adding
   binary content; generated Binaries/Intermediate/Saved/DerivedDataCache remain ignored.
 
@@ -36,7 +37,7 @@ Do not substitute a successful documentation check for this build evidence.
 
 | Milestone | Entry point after implementation | What to do / expected result |
 | --- | --- | --- |
-| M1 | L_AlienCabinet | Launch shell, reach start/attract; inspect configured controls and pause UI |
+| M1 | /Game/Tests/Maps/L_PhysicsPrototype | Launch empty shell; verify GameMode/controller/pawn and loaded input contexts; BOOT state, no menus yet |
 | M2 | /Game/Tests/Maps/L_PhysicsPrototype | Short/full plunger launch, both flippers, repeat at 30/60/120 FPS; no tunneling |
 | M3 | Graybox L_AlienCabinet practice loop | Hit all object categories, traverse two lanes, drain/reset and recover trapped ball |
 | M4 | L_AlienCabinet | Three-ball score session, pause, game over, clean restart and Quit |

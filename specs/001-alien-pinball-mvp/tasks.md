@@ -1,4 +1,4 @@
-﻿# Tasks: Alien Invasion Pinball MVP
+# Tasks: Alien Invasion Pinball MVP
 
 **Input**: [spec.md](spec.md), [plan.md](plan.md), [research.md](research.md),
 [data-model.md](data-model.md), [gameplay contract](contracts/gameplay.md),
@@ -13,7 +13,7 @@ final MVP requirements remain mandatory. A story can span multiple playable incr
 
 **Tests**: The constitution requires meaningful score/flow/lifecycle automation and the spec
 requires playable acceptance. Include those checks without imposing blanket TDD. Record actual
-results at each checkpoint; compilation alone does not prove gameplay. All tasks are unstarted.
+results at each checkpoint; compilation alone does not prove gameplay. Completion is tracked by the task checkboxes below.
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -37,14 +37,14 @@ Use stock GameInstance and PlayerCameraManager; no extra custom manager hierarch
 **Dependencies**: None. **Independent test**: Build/open the project, launch the empty map,
 and verify controller/pawn/input assets. No ball gameplay is claimed at this checkpoint.
 
-- [ ] T001 Verify UE 5.8.2 and supported compiler/SDK from research.md; record installed versions and build command in specs/001-alien-pinball-mvp/validation/setup.md.
-- [ ] T002 Create PinballBattle.uproject, Source/PinballBattle.Target.cs, Source/PinballBattleEditor.Target.cs and Source/PinballBattle/PinballBattle.Build.cs for the blank Windows C++20 project; preserve repository documents and enable Enhanced Input, UMG, PhysicsCore and Niagara.
-- [ ] T003 Configure binary tracking in .gitattributes and confirm generated-file exclusions in .gitignore; verify Git LFS before adding binary content and record prerequisites in specs/001-alien-pinball-mvp/validation/setup.md.
-- [ ] T004 Create minimal GameModeBase, GameStateBase and PlayerController classes in Source/PinballBattle/Private/Framework/PinballGameModeBase.cpp, PinballGameStateBase.cpp and PinballPlayerController.cpp in that directory, plus Source/PinballBattle/Private/Pinball/PinballControlPawn.cpp; establish explicit references, without score/minigame implementation.
-- [ ] T005 Define flow enum in Source/PinballBattle/Public/Data/PinballSessionTypes.h and sole state-writer component in Source/PinballBattle/Private/Framework/GameFlowComponent.cpp; include "BOOT, ATTRACT, PINBALL_READY, PINBALL_PLAYING, MINIGAME_TRANSITION, MINIGAME_PLAYING, MINIGAME_RESULTS, BALL_LOST, GAME_OVER, PAUSED".
-- [ ] T006 Author Content/Framework/Blueprints/BP_PinballGameMode.uasset, BP_PinballPlayerController.uasset in that directory, Content/Framework/Pinball/BP_PinballControlPawn.uasset and Content/Tests/Maps/L_PhysicsPrototype.umap; configure classes/map and collision channels in Config/DefaultEngine.ini.
-- [ ] T007 Author Content/Framework/Input/IA_LeftFlipper.uasset, IA_RightFlipper.uasset, IA_Plunger.uasset, IA_Pause.uasset, IMC_Pinball.uasset and IMC_Common.uasset in that directory; configure Enhanced Input in Config/DefaultInput.ini for Left/Right, hold/release Down, and Escape.
-- [ ] T008 Build Development Editor and launch the empty prototype standalone; record startup, correct classes and loaded inputs in specs/001-alien-pinball-mvp/validation/setup.md.
+- [X] T001 Verify UE 5.8.2 and supported compiler/SDK from research.md; record installed versions and build command in specs/001-alien-pinball-mvp/validation/setup.md.
+- [X] T002 Create PinballBattle.uproject, Source/PinballBattle.Target.cs, Source/PinballBattleEditor.Target.cs and Source/PinballBattle/PinballBattle.Build.cs for the blank Windows C++20 project; preserve repository documents and enable Enhanced Input, UMG, PhysicsCore and Niagara.
+- [X] T003 Configure binary tracking in .gitattributes and confirm generated-file exclusions in .gitignore; verify Git LFS before adding binary content and record prerequisites in specs/001-alien-pinball-mvp/validation/setup.md.
+- [X] T004 Create minimal GameModeBase, GameStateBase and PlayerController classes in Source/PinballBattle/Private/Framework/PinballGameModeBase.cpp, PinballGameStateBase.cpp and PinballPlayerController.cpp in that directory, plus Source/PinballBattle/Private/Pinball/PinballControlPawn.cpp; establish explicit references, without score/minigame implementation.
+- [X] T005 Define flow enum in Source/PinballBattle/Public/Data/PinballSessionTypes.h and sole state-writer component in Source/PinballBattle/Private/Framework/GameFlowComponent.cpp; include "BOOT, ATTRACT, PINBALL_READY, PINBALL_PLAYING, MINIGAME_TRANSITION, MINIGAME_PLAYING, MINIGAME_RESULTS, BALL_LOST, GAME_OVER, PAUSED".
+- [X] T006 Author Content/Framework/Blueprints/BP_PinballGameMode.uasset, BP_PinballPlayerController.uasset in that directory, Content/Framework/Pinball/BP_PinballControlPawn.uasset and Content/Tests/Maps/L_PhysicsPrototype.umap; configure classes/map and collision channels in Config/DefaultEngine.ini.
+- [X] T007 Author Content/Framework/Input/IA_LeftFlipper.uasset, IA_RightFlipper.uasset, IA_Plunger.uasset, IA_Pause.uasset, IMC_Pinball.uasset and IMC_Common.uasset in that directory; configure Enhanced Input in Config/DefaultInput.ini for Left/Right, hold/release Down, and Escape.
+- [X] T008 Build Development Editor and launch the empty prototype standalone; record startup, correct classes and loaded inputs in specs/001-alien-pinball-mvp/validation/setup.md.
 
 **Checkpoint**: Setup complete; no separate nonplayable foundational phase follows.
 
@@ -178,9 +178,9 @@ absent from the test cabinet.
 - [ ] T069 [P] [US3] Implement Source/PinballBattle/Private/Minigames/AsteroidField/AsteroidObstacle.cpp and AsteroidProjectile.cpp in that directory with drift/rebound, once-only destruction and run identity (after T067; independent of T068).
 - [ ] T070 [US3] Integrate damage, protected respawn and >=20 attainable objects within 30 seconds in Source/PinballBattle/Private/Minigames/AsteroidField/AsteroidFieldRuntime.cpp; never change pinball balls and defer optional object splitting.
 - [ ] T071 [US3] Author Content/Minigames/AsteroidField/Blueprints/BP_AsteroidFieldRuntime.uasset, BP_AsteroidShip.uasset, BP_AsteroidObstacle.uasset and BP_AsteroidProjectile.uasset in that directory plus Content/Minigames/AsteroidField/Maps/L_MG_AsteroidField.umap; original placeholders, explicit camera/root/bounds and dormant startup.
-- [ ] T072 [US3] Author Content/Minigames/AsteroidField/Data/DA_MG_AsteroidField.uasset and Content/Minigames/AsteroidField/Input/IMC_AsteroidField.uasset; Left/Right/Up/Space, 30 seconds/three lives, local HUD/instructions and bonus examples 2 objects→1,000/20→10,000.
+- [ ] T072 [US3] Author Content/Minigames/AsteroidField/Data/DA_MG_AsteroidField.uasset and Content/Minigames/AsteroidField/Input/IMC_AsteroidField.uasset; Left/Right/Up/Space, 30 seconds/three lives, local HUD/instructions, visible and audible feedback for each accepted object destruction, and bonus examples 2 objects→1,000/20→10,000.
 - [ ] T073 [US3] Create Content/Tests/Data/DA_AsteroidTestCabinet.uasset for the common harness and serially add the development asteroid association to Content/Cabinets/AlienInvasion/Data/DA_AlienCabinet.uasset; no shared-code special case.
-- [ ] T074 [US3] Verify controls/rebounds, once-only kills, protected lives, both endings, attainable bonuses and return; record specs/001-alien-pinball-mvp/validation/asteroid-field.md.
+- [ ] T074 [US3] Verify controls/rebounds, once-only kills with visible and audible scoring feedback, protected lives, both endings, attainable bonuses and return; record specs/001-alien-pinball-mvp/validation/asteroid-field.md.
 
 **Checkpoint**: First real minigame is independently playable from pinball.
 
@@ -195,8 +195,8 @@ absent from the test cabinet.
 - [ ] T078 [US4] Implement Source/PinballBattle/Private/Minigames/PlanetaryDefense/DefenseInterceptor.cpp and DefenseBlastZone.cpp in that directory: swept travel, finite blast lifetime, overlapping-zone deduplication and owned cleanup.
 - [ ] T079 [US4] Integrate spawn pacing, destruction/colony metrics and success only with >=1 survivor in Source/PinballBattle/Private/Minigames/PlanetaryDefense/PlanetaryDefenseRuntime.cpp; make >=28 threats attainable in 30 seconds.
 - [ ] T080 [US4] Author Content/Minigames/PlanetaryDefense/Blueprints/BP_PlanetaryDefenseRuntime.uasset, BP_DefenseAimPawn.uasset, BP_DefenseThreat.uasset, BP_DefenseColony.uasset, BP_DefenseInterceptor.uasset and BP_DefenseBlastZone.uasset in that directory plus Content/Minigames/PlanetaryDefense/Maps/L_MG_PlanetaryDefense.umap with explicit root/camera and three colonies.
-- [ ] T081 [US4] Author Content/Minigames/PlanetaryDefense/Data/DA_MG_PlanetaryDefense.uasset, Content/Minigames/PlanetaryDefense/Input/IMC_PlanetaryDefense.uasset and Content/Tests/Data/DA_DefenseTestCabinet.uasset; configure HUD/instructions and bonuses 4 threats/0 colonies→1,000, 28/3→10,000, then serialize association into Content/Cabinets/AlienInvasion/Data/DA_AlienCabinet.uasset.
-- [ ] T082 [US4] Verify aim/fire, finite blasts, no double credit, colony loss, zero-colony full timer, reward monotonicity and return; record specs/001-alien-pinball-mvp/validation/planetary-defense.md.
+- [ ] T081 [US4] Author Content/Minigames/PlanetaryDefense/Data/DA_MG_PlanetaryDefense.uasset, Content/Minigames/PlanetaryDefense/Input/IMC_PlanetaryDefense.uasset and Content/Tests/Data/DA_DefenseTestCabinet.uasset; configure HUD/instructions, visible and audible feedback for each accepted threat interception, and bonuses 4 threats/0 colonies→1,000, 28/3→10,000, then serialize association into Content/Cabinets/AlienInvasion/Data/DA_AlienCabinet.uasset.
+- [ ] T082 [US4] Verify aim/fire, finite blasts, no double credit, visible and audible scoring feedback for accepted interceptions, colony loss, zero-colony full timer, reward monotonicity and return; record specs/001-alien-pinball-mvp/validation/planetary-defense.md.
 
 **Checkpoint**: Second distinct minigame is independently playable and integrated.
 
@@ -211,8 +211,8 @@ correct destruction/survival rewards and no dependencies on other games.
 - [ ] T085 [P] [US5] Implement moving/firing enemies, swept projectiles and once-only damage/destruction in Source/PinballBattle/Private/Minigames/AlienAssault/AssaultEnemy.cpp and AssaultProjectile.cpp in that directory (after T083; independent of T084).
 - [ ] T086 [US5] Integrate waves, one-life-per-hit, respawn immunity and >=28 attainable kills per 30 seconds in Source/PinballBattle/Private/Minigames/AlienAssault/AlienAssaultRuntime.cpp; close local damage before result and never change pinball balls.
 - [ ] T087 [US5] Author Content/Minigames/AlienAssault/Blueprints/BP_AlienAssaultRuntime.uasset, BP_AssaultShip.uasset, BP_AssaultEnemy.uasset and BP_AssaultProjectile.uasset in that directory plus Content/Minigames/AlienAssault/Maps/L_MG_AlienAssault.umap with original visuals, bounded arena and explicit root/camera.
-- [ ] T088 [US5] Author Content/Minigames/AlienAssault/Data/DA_MG_AlienAssault.uasset, Content/Minigames/AlienAssault/Input/IMC_AlienAssault.uasset and Content/Tests/Data/DA_AssaultTestCabinet.uasset; configure HUD/controls and bonuses 4 kills/10 seconds→2,000, 28/30→10,000, then serialize association into Content/Cabinets/AlienInvasion/Data/DA_AlienCabinet.uasset.
-- [ ] T089 [US5] Verify movement, enemy/player fire, lives/immunity, both endings, score examples and safe return with siblings absent; record specs/001-alien-pinball-mvp/validation/alien-assault.md.
+- [ ] T088 [US5] Author Content/Minigames/AlienAssault/Data/DA_MG_AlienAssault.uasset, Content/Minigames/AlienAssault/Input/IMC_AlienAssault.uasset and Content/Tests/Data/DA_AssaultTestCabinet.uasset; configure HUD/controls, visible and audible feedback for each accepted enemy destruction, and bonuses 4 kills/10 seconds→2,000, 28/30→10,000, then serialize association into Content/Cabinets/AlienInvasion/Data/DA_AlienCabinet.uasset.
+- [ ] T089 [US5] Verify movement, enemy/player fire, visible and audible scoring feedback for accepted enemy destructions, lives/immunity, both endings, score examples and safe return with siblings absent; record specs/001-alien-pinball-mvp/validation/alien-assault.md.
 
 **Checkpoint**: All three games use one lifecycle, transition and scoring boundary.
 
@@ -270,12 +270,12 @@ no blocked trajectory, collision regression, confusing objective or global light
 **Goal**: Measured polished prototype meeting all success criteria.
 **Dependencies**: Phase 10 and all seven story gates. No speculative new systems.
 
-- [ ] T105 Tune Content/Framework/Pinball/DA_PinballTuning.uasset, Content/Cabinets/AlienInvasion/Data/DA_AlienScoring.uasset and existing minigame definitions from play evidence; retain 30-second runs, 3-second results/protected return and attainable 1,000–10,000 base rewards; record specs/001-alien-pinball-mvp/validation/tuning.md.
+- [ ] T105 Tune Content/Framework/Pinball/DA_PinballTuning.uasset, Content/Cabinets/AlienInvasion/Data/DA_AlienScoring.uasset and existing minigame definitions from play evidence; retain 30-second active-play runs, 3-second unpaused results and 1-second active-play return trigger protection and attainable 1,000–10,000 base rewards; record specs/001-alien-pinball-mvp/validation/tuning.md.
 - [ ] T106 Run all Score/Flow/Transition automation and functional checks plus ten starts, five full sessions and physics contact checks; summarize executed test counts/pass/fail/defects for SC-001–007 in specs/001-alien-pinball-mvp/validation/acceptance.md.
 - [ ] T107 Profile packaged cold/warm play for five minutes per mode on research.md reference settings; fix measured hitches/leaks and record actual hardware, average >=60 FPS, 99% active frames <=20 ms and transition freezes <=250 ms in specs/001-alien-pinball-mvp/validation/performance.md.
 - [ ] T108 Run the five-first-time-player study; require >=4 successful control/objective users and >=4 readability/responsiveness ratings >=4/5, recording specs/001-alien-pinball-mvp/validation/usability.md; tune/retest when thresholds fail.
 - [ ] T109 Review core includes/content references and each minigame with siblings absent; confirm original/no-paid content, no excluded systems and constitution compliance in specs/001-alien-pinball-mvp/validation/architecture.md.
-- [ ] T110 Update specs/001-alien-pinball-mvp/quickstart.md with actual commands and complete specs/001-alien-pinball-mvp/validation/acceptance.md linking SC-001–010 and all 17 user acceptance criteria to evidence; disclose defects and do not claim completion before every required outcome passes.
+- [ ] T110 Update specs/001-alien-pinball-mvp/quickstart.md with actual commands and complete specs/001-alien-pinball-mvp/validation/acceptance.md linking SC-001–010 and all 29 story acceptance scenarios (US1-AS1–AS7, US2-AS1–AS5, US3-AS1–AS3, US4-AS1–AS5, US5-AS1–AS3, US6-AS1–AS3 and US7-AS1–AS3) to evidence; disclose defects and do not claim completion before every required outcome passes.
 
 **Checkpoint**: Validated MVP ready for review; document validation alone cannot satisfy this.
 
@@ -355,7 +355,7 @@ common configuration integration. Task generation does not start agents or imple
 | FR-018–019 Defense | T075–T082 |
 | FR-020–021 Assault | T083–T089 |
 | FR-022–024 Scoring | T030–T032, T057–T058, T072/T081/T088, T105 |
-| FR-025–026 Feedback/HUD | T027, T034, T055, T091, T101–T104 |
+| FR-025–026 Feedback/HUD | T027, T034, T055, T072/T074, T081–T082, T088–T089, T091, T101–T104 |
 | FR-027–028 End/restart | T033, T040–T042, T061, T097–T098 |
 | FR-029 Original no-paid content | T071/T080/T087, T100–T104, T109 |
 | FR-030 Reuse/independence | T004, T043–T049, T073/T081/T088, T109 |
