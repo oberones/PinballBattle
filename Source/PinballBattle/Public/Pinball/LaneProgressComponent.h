@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "Data/ScoringTypes.h"
 #include "Pinball/InteractionState.h"
+#include "Pinball/TableSuspendParticipant.h"
 #include "LaneProgressComponent.generated.h"
 
 class APinballTable;
@@ -14,10 +15,12 @@ class UStaticMeshComponent;
 
 /** Nonblocking directed lane. Samples swept centre paths so a fast ball cannot skip a gate. */
 UCLASS(ClassGroup=Pinball, meta=(BlueprintSpawnableComponent))
-class PINBALLBATTLE_API ULaneProgressComponent : public UActorComponent
+class PINBALLBATTLE_API ULaneProgressComponent : public UActorComponent, public ITableSuspendParticipant
 {
     GENERATED_BODY()
 public:
+    /** Discard traversal continuity across safe relocation, preventing a synthetic lane completion. */
+    virtual void CommitRestore(int64 Generation) override;
     /** Evaluate traversal after table recovery and the current physics step. */
     ULaneProgressComponent();
     /** Bind the explicit oriented corridor, where local +Y is the scoring direction. */

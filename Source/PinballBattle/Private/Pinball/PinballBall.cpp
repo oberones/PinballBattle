@@ -5,6 +5,11 @@
 #include "UObject/ConstructorHelpers.h"
 #include "Engine/StaticMesh.h"
 
+// Preserve entitlement semantics; physical flags and velocities belong to the table snapshot.
+bool APinballBall::CaptureState(int64 Generation) { return Generation > 0 && IsLaunched() && IsValid(Body); }
+// Recreated actors remain kinematic until the same-entitlement table commit.
+void APinballBall::RestoreActiveEntitlement() { bLaunched = true; bDrained = false; Body->SetSimulatePhysics(false); }
+
 APinballBall::APinballBall()
 {
     PrimaryActorTick.bCanEverTick = true;

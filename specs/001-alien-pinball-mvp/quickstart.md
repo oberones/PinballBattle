@@ -1,5 +1,13 @@
 # Quickstart and Validation Guide
 
+Phase 5 adds `/Game/Tests/Maps/L_TransitionTest` for the generic minigame round trip.
+Start and launch normally, then enter the circular objective. Release controls and press
+fresh Space/Enter to begin the 30-second Space-action stub. Escape works during transitions,
+play and results. The bonus displays for three active seconds before safe same-ball return.
+Run `./Scripts/Run-Phase5Validation.ps1` after building; see
+[framework round-trip evidence](validation/framework-roundtrip.md) for the assets, automated
+failure cases and validation limits. The default production map remains the basic cabinet.
+
 Phase 4 makes `/Game/Cabinets/AlienInvasion/Maps/L_AlienCabinet` the default startup map.
 Choose **Start**, hold/release **Down** to launch, use **Left/Right** flippers, and press
 **Escape** to pause/resume. After three drains, Game Over shows the locked final score and

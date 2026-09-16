@@ -97,10 +97,11 @@ bool ABasicSessionProbe::CheckFailedStartAndRetry()
     return bValid;
 }
 
+// Resolve the explicit TObjectPtr inventory entry before injecting a controlled contact for regression.
 void ABasicSessionProbe::StrikeTestBumper()
 {
     auto* Ball = Table->GetBall();
-    auto* Bumper = Table->Bumpers[0];
+    auto* Bumper = Table->Bumpers[0].Get();
     // Keep the fixture clear of physical surfaces; only the explicitly injected ring contact awards.
     Ball->SetActorLocation(Table->GetActorTransform().TransformPosition(FVector(0, 450, 140)), false, nullptr, ETeleportType::TeleportPhysics);
     Ball->GetBody()->SetEnableGravity(false);

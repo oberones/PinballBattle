@@ -10,7 +10,7 @@ class UButton;
 class APinballGameStateBase;
 
 UENUM(BlueprintType)
-enum class EPinballScreen : uint8 { Start, HUD, Pause, GameOver };
+enum class EPinballScreen : uint8 { Start, HUD, Pause, GameOver, Instructions, MiniGameHUD, Results, Recovery };
 
 /** Delegate-driven presentation only: all buttons forward intents to the owning controller. */
 UCLASS()
@@ -30,6 +30,8 @@ public:
     FString GetStatusText() const;
     /** Show a retryable start failure without requiring a flow change or replacing the final score. */
     void ShowStartFailure(const FText& Failure);
+    /** Display owner-supplied round progress without ticking gameplay or awarding points. */
+    void ShowMiniGameStatus(const FText& Text);
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) EPinballScreen Screen = EPinballScreen::HUD;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) FText Heading;
 private:
@@ -45,6 +47,8 @@ private:
     UFUNCTION() void PrimaryIntent();
     /** Send Quit to the controller; this widget never tears down gameplay itself. */
     UFUNCTION() void QuitIntent();
+    /** Forward secured recovery retry without restarting the session. */
+    UFUNCTION() void RetryIntent();
     UPROPERTY(Transient) TObjectPtr<UTextBlock> Status;
     UPROPERTY(Transient) TObjectPtr<UTextBlock> Notice;
     UPROPERTY(Transient) TObjectPtr<APinballGameStateBase> StateSource;

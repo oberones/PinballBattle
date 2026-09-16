@@ -1,16 +1,21 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Pinball/TableSuspendParticipant.h"
 #include "PinballPlunger.generated.h"
 
 class UPinballTuningData;
 class UStaticMeshComponent;
 
 UCLASS()
-class PINBALLBATTLE_API APinballPlunger : public AActor
+class PINBALLBATTLE_API APinballPlunger : public AActor, public ITableSuspendParticipant
 {
     GENERATED_BODY()
 public:
+    /** Cancel charge without converting it into a release impulse. */
+    virtual bool SuspendForMinigame(int64 Generation) override;
+    /** Keep the plunger neutral throughout staged restoration. */
+    virtual bool PrepareRestore(int64 Generation) override;
     APinballPlunger();
     void Configure(UPinballTuningData* InTuning) { Tuning = InTuning; }
     void BeginCharge();

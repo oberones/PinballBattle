@@ -58,6 +58,7 @@ void APinballTable::BeginPlay()
     if (APinballGameModeBase* Mode = GetWorld()->GetAuthGameMode<APinballGameModeBase>()) Mode->RegisterTable(this);
 }
 
+// Build explicit body and behavior manifests alongside validated physical configuration.
 bool APinballTable::InitializeTable(FString& OutError)
 {
     if (!Tuning || !BallClass || !LeftFlipper || !RightFlipper || LeftFlipper == RightFlipper ||
@@ -106,7 +107,51 @@ bool APinballTable::InitializeTable(FString& OutError)
         Lane->Feedback->Initialize(Lane->Flash);
     }
     Drain->Drain->Initialize(this);
+    Session->RegisterParticipant(this);
+    Session->RegisterParticipant(LeftFlipper); Session->RegisterParticipant(RightFlipper);
+    Session->RegisterParticipant(Plunger); Session->RegisterParticipant(Drain);
+    for (const auto& Element : Bumpers) { Session->RegisterParticipant(Element); Session->RegisterParticipant(Element->Response); }
+    for (const auto& Element : Targets) Session->RegisterParticipant(Element);
+    for (const auto& Element : Lanes) { Session->RegisterParticipant(Element); Session->RegisterParticipant(Element->Progress); }
     return true;
+}
+
+// Invalidate queued contacts before any constraint, body or controller mutation.
+void APinballTable::SecureForMiniGame()
+{
+    ++PhysicalEpoch; BallHandle.Disposition = EBallDisposition::Suspended;
+}
+
+// Return protection applies to objectives only; ordinary scores/drains resume immediately.
+void APinballTable::CommitMiniGameReturn()
+{
+    ++PhysicalEpoch; BallHandle.Disposition = EBallDisposition::Active;
+    LowMotionSeconds = 0; EventProtectionUntil = 0; RecoveryRetryAt = 0;
+}
+
+// Share the established overlap/sweep validation without using trap-recovery's separate guard.
+bool APinballTable::FindSafeReturn(FVector& Location, FVector& Velocity) const
+{
+    if (!Tuning) return false;
+    Velocity = GetActorTransform().TransformVectorNoScale(ReturnVelocity);
+    for (const auto* Marker : {PrimaryReturn.Get(), BackupReturn.Get()})
+        if (IsValid(Marker) && IsSafeRelease(Marker->GetComponentLocation(), Velocity))
+        { Location = Marker->GetComponentLocation(); return true; }
+    return false;
+}
+
+// Replace a destroyed physical actor without charging a ball or allocating another entitlement.
+bool APinballTable::EnsureReturnBall()
+{
+    if (IsValid(CurrentBall)) return true;
+    if (BallHandle.Disposition != EBallDisposition::Suspended || !BallHandle.BallId.IsValid()) return false;
+    FVector Location, Velocity; if (!FindSafeReturn(Location, Velocity)) return false;
+    FTransform Transform(GetActorRotation(), Location);
+    CurrentBall = GetWorld()->SpawnActorDeferred<APinballBall>(BallClass, Transform, this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+    if (!CurrentBall) return false;
+    CurrentBall->Configure(Tuning); CurrentBall->FinishSpawning(Transform);
+    CurrentBall->RestoreActiveEntitlement(); CurrentBall->GetBody()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    BallHandle.Ball = CurrentBall; Session->RegisterBody(CurrentBall->GetBody()); return true;
 }
 
 bool APinballTable::SpawnReadyBall()
@@ -221,10 +266,11 @@ bool APinballTable::IsInside(const UBoxComponent* Volume, const FVector& Positio
     return FMath::Abs(Local.X) <= Extent.X && FMath::Abs(Local.Y) <= Extent.Y && FMath::Abs(Local.Z) <= Extent.Z;
 }
 
+// Use configured sphere dimensions when validating replacement of a destroyed physical actor.
 bool APinballTable::IsSafeRelease(const FVector& Position, const FVector& Velocity) const
 {
     if (Position.ContainsNaN() || !IsInside(EscapeBounds, Position)) return false;
-    const float Radius = CurrentBall->GetBody()->GetScaledSphereRadius() + 1.f;
+    const float Radius = (IsValid(CurrentBall) ? CurrentBall->GetBody()->GetScaledSphereRadius() : Tuning->BallRadius * Tuning->TableScale) + 1.f;
     FCollisionObjectQueryParams Objects;
     Objects.AddObjectTypesToQuery(ECC_WorldStatic);
     Objects.AddObjectTypesToQuery(ECC_GameTraceChannel2);

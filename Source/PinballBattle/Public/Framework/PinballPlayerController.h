@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "Data/PinballSessionTypes.h"
+#include "Data/TransitionTypes.h"
 #include "PinballPlayerController.generated.h"
 
 class UInputMappingContext;
@@ -10,6 +11,8 @@ class UInputAction;
 class UUserWidget;
 class APinballTable;
 class UPinballPresentationWidget;
+class AMiniGameRuntimeBase;
+class UMiniGameDefinition;
 struct FInputActionValue;
 
 /** Owns local input contexts and explicit view selection, with content-supplied assets. */
@@ -19,7 +22,26 @@ class PINBALLBATTLE_API APinballPlayerController : public APlayerController
     GENERATED_BODY()
 
 public:
+    /** Keep camera selection explicit across possession changes. */
     APinballPlayerController();
+    /** Snapshot persistent pinball presentation before releasing control. */
+    bool CaptureMiniGameMode(int64 Generation, FControllerModeSnapshot& Snapshot);
+    /** Possess the prepared run pawn and cut to its registered camera. */
+    bool SwitchToMiniGame(AMiniGameRuntimeBase* Runtime);
+    /** Install the boot-resolved owned context with fresh Boolean/axis input guards. */
+    bool EnableMiniGameInput(const UMiniGameDefinition* Definition);
+    /** Remove only this controller's minigame mapping while preserving common Escape. */
+    void DisableMiniGameInput();
+    /** Restore the persistent pawn and view before outgoing actors are cleaned. */
+    bool RestoreMiniGameMode(const FControllerModeSnapshot& Snapshot);
+    /** Present flow-owned status without adding widget clocks. */
+    void UpdateMiniGameStatus(const FText& Status);
+    /** Track release-neutral readiness and consume confirmation separately from gameplay actions. */
+    virtual void PlayerTick(float DeltaSeconds) override;
+    /** Pawn axis handlers must use this gate until every carried input has returned to neutral. */
+    bool IsMiniGameInputReady() const { return bFreshMiniGameInput && MiniGameMappingContext != nullptr; }
+    /** Forward explicit secured recovery retry. */
+    UFUNCTION(BlueprintCallable) void RequestRetryIntent();
     void ConfigureTable(APinballTable* InTable);
     void CancelActions();
     /** Forward Start/Restart intents to the authoritative GameMode. */
@@ -63,4 +85,17 @@ private:
     UPROPERTY(Transient) TObjectPtr<UUserWidget> ControlsWidget;
     UPROPERTY(Transient) TObjectPtr<UPinballPresentationWidget> Presentation;
     EArcadeGameFlowState LastPresentedState = EArcadeGameFlowState::BOOT;
+    UPROPERTY(Transient) TObjectPtr<UInputMappingContext> MiniGameMappingContext;
+    UPROPERTY(Transient) TWeakObjectPtr<AMiniGameRuntimeBase> MiniGameRuntime;
+    bool bModeSwap = false;
+    bool bFreshMiniGameInput = false;
+    bool bSpaceWasDown = false;
+    bool bEnterWasDown = false;
+    uint32 MiniGameActionBinding = 0;
+    int64 ModeGeneration = 0;
+    UPROPERTY(Transient) TWeakObjectPtr<APawn> PersistentPinballPawn;
+    /** Route Enhanced Input's fresh action event through the active local lifecycle gate. */
+    void MiniGameActionPressed();
+    /** Check physical keyboard and mapped analog axes before allowing confirmation or fresh input. */
+    bool AreMiniGameAxesNeutral() const;
 };

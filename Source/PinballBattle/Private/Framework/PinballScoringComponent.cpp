@@ -25,6 +25,7 @@ bool UPinballScoringComponent::ResetSession(FGuid SessionId, const UScoringProfi
     return true;
 }
 
+// Copy all profile values so editing assets cannot reinterpret accepted gameplay.
 bool UPinballScoringComponent::PrepareSession(FGuid SessionId, const UScoringProfile* Profile, FPreparedSession& Prepared)
 {
     FString Error;
@@ -35,9 +36,11 @@ bool UPinballScoringComponent::PrepareSession(FGuid SessionId, const UScoringPro
     Prepared.MinimumMultiplier = Profile->MinimumMultiplier;
     Prepared.MaximumMultiplier = Profile->MaximumMultiplier;
     Prepared.ProfileRevision = Profile->Revision;
+    Prepared.MiniGameRules = Profile->MiniGameRules;
     return true;
 }
 
+// Replace both event and run ledgers only after the new session has been prepared.
 void UPinballScoringComponent::CommitSession(FPreparedSession&& Prepared)
 {
     ActiveSession = Prepared.SessionId;
@@ -45,12 +48,47 @@ void UPinballScoringComponent::CommitSession(FPreparedSession&& Prepared)
     MinimumMultiplier = Prepared.MinimumMultiplier;
     MaximumMultiplier = Prepared.MaximumMultiplier;
     ProfileRevision = Prepared.ProfileRevision;
+    MiniGameRules = MoveTemp(Prepared.MiniGameRules);
+    FinalizedRuns.Reset();
     AcceptedEvents.Reset();
     SourceSequences.Reset();
     SequenceBall.Invalidate();
     TotalScore = 0;
     LatestAward = FScoreAward();
     LatestAward.SessionId = ActiveSession;
+}
+
+// Resolve a requested profile explicitly; a missing profile never falls back to another game's rules.
+bool UPinballScoringComponent::CaptureMiniGameProfile(FName Key, FMiniGameContext& C) const
+{
+    for (const auto& Rule : MiniGameRules) if (Rule.ProfileKey == Key)
+    {
+        C.MetricWeights = Rule.Weights; C.FloorMetrics = Rule.FloorMetrics;
+        C.BaseCap = Rule.BaseCap; C.ProfileRevision = ProfileRevision;
+        return true;
+    }
+    return false;
+}
+
+// The ledger write precedes delegates, preventing reentrant or repeated results from awarding twice.
+bool UPinballScoringComponent::EvaluateAndAwardMiniGame(const FMiniGameResult& R, const FMiniGameContext& C, FScoreAward& Award)
+{
+    if (ActiveSession != C.SessionId || !C.IsValid() || !R.Matches(C) || FinalizedRuns.Contains(C.RunId)) return false;
+    double Base = 0; EPerformanceRating Rating;
+    const bool Valid = UScoringProfile::EvaluateMiniGame(R, C, Base, Rating);
+    if (!Valid) Base = 0;
+    int64 Points = 0, NewTotal = TotalScore;
+    const double ResultMultiplier = Valid && R.bHasMultiplier ? R.Multiplier : 1;
+    if (!CalculateAward(Base * ResultMultiplier, C.SessionMultiplier, TotalScore, Points, NewTotal))
+    { Base = 0; Points = 0; NewTotal = TotalScore; UE_LOG(LogPinballBattle, Warning, TEXT("Rejected overflowing minigame award.")); }
+    Award = FScoreAward(); Award.AwardId = FGuid::NewGuid(); Award.SessionId = ActiveSession;
+    Award.RunId = C.RunId; Award.BasePoints = static_cast<int64>(std::floor(Base));
+    Award.EffectiveMultiplier = C.SessionMultiplier; Award.AwardedPoints = Points;
+    Award.NewTotal = NewTotal; Award.ProfileRevision = C.ProfileRevision;
+    FinalizedRuns.Add(C.RunId, Award); TotalScore = NewTotal; LatestAward = Award;
+    OnScoreChanged.Broadcast(Award);
+    OnBonusAwarded.Broadcast(Award);
+    return true;
 }
 
 void UPinballScoringComponent::PublishReset()
