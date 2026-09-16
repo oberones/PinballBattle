@@ -7,7 +7,7 @@ bool UPinballTuningData::Validate(FString& OutError) const
     const float PositiveValues[] = {TableScale, InclineDegrees, BallRadius, BallMass, MaxBallSpeed,
         MaxChargeSeconds, MinLaunchImpulse, MaxLaunchImpulse, ChargeExponent, FlipperTravelDegrees,
         FlipperStrength, FlipperDamping, FlipperMaxTorque, FlipperMass, BumperImpulse,
-        BumperCooldown, TrapWindowSeconds, LowMotionSpeed};
+        BumperCooldown, ContactSeparationTolerance, TrapWindowSeconds, LowMotionSpeed};
     for (const float Value : PositiveValues)
     {
         if (!FMath::IsFinite(Value) || Value <= 0.f)

@@ -9,6 +9,7 @@
 #include "Pinball/PinballPlunger.h"
 #include "Engine/World.h"
 
+/** Build the temporary practice controls without authoritative score or gameplay state. */
 void UPrototypeControlsWidget::NativeOnInitialized()
 {
     Super::NativeOnInitialized();
@@ -36,6 +37,7 @@ void UPrototypeControlsWidget::NativeOnInitialized()
     Status = AddText(FText::GetEmpty(), 21, FLinearColor(1.f, .8f, .3f));
 }
 
+/** Display launch power and observed event counts; no feedback path mutates score. */
 void UPrototypeControlsWidget::NativeTick(const FGeometry& Geometry, float DeltaSeconds)
 {
     Super::NativeTick(Geometry, DeltaSeconds);
@@ -47,5 +49,13 @@ void UPrototypeControlsWidget::NativeTick(const FGeometry& Geometry, float Delta
         ? FString::Printf(TEXT("Launch power: %d%%"), FMath::RoundToInt(100.f * Plunger->GetChargeAlpha()))
         : TEXT("Ready to launch");
     else if (!Mode->CanPlay()) Text = TEXT("Preparing next ball...");
+    const APinballTable* Table = Mode->GetTable();
+    if (Table->bRequireCompleteInventory)
+    {
+        if (Table->GetBallHandle().Disposition == EBallDisposition::Recovering) Text = TEXT("Return path blocked - ball secured");
+        Text += FString::Printf(TEXT("\n\nHITS / TRAVERSALS\nTargets: %d\nBumpers: %d\nLanes: %d\nSafe returns: %d"),
+            Table->GetInteractionCount(EScoringCategory::Target), Table->GetInteractionCount(EScoringCategory::Bumper),
+            Table->GetInteractionCount(EScoringCategory::Lane), Table->GetRecoveryCount());
+    }
     Status->SetText(FText::FromString(Text));
 }

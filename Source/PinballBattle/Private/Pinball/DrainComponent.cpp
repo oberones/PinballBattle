@@ -18,9 +18,17 @@ UDrainComponent::UDrainComponent()
 void UDrainComponent::OnEnter(UPrimitiveComponent*, AActor* OtherActor, UPrimitiveComponent*, int32, bool, const FHitResult&)
 {
     APinballBall* Ball = Cast<APinballBall>(OtherActor);
-    if (Table && Table->IsCurrentBall(Ball))
+    if (Table && Table->CanEmitEvent(Ball))
         if (APinballGameModeBase* Mode = GetWorld()->GetAuthGameMode<APinballGameModeBase>())
-            Mode->RequestDrain(Ball);
+        {
+            FDrainEvent Event;
+            Event.SessionId = Table->GetBallHandle().SessionId;
+            Event.BallId = Table->GetBallHandle().BallId;
+            Event.EventId = FGuid::NewGuid();
+            Event.SourceId = SourceId;
+            Event.PhaseEpoch = Table->GetPhysicalEpoch();
+            Mode->RequestDrainEvent(Event);
+        }
 }
 
 APinballDrain::APinballDrain()

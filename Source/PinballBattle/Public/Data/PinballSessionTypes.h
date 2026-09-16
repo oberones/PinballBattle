@@ -18,3 +18,20 @@ enum class EArcadeGameFlowState : uint8
     GAME_OVER,
     PAUSED
 };
+
+class APinballBall;
+
+/** Physical disposition is separate from the session's legal flow state. */
+UENUM(BlueprintType)
+enum class EBallDisposition : uint8 { Ready, Active, Suspended, Drained, Recovering };
+
+/** One ball entitlement. Recovery moves its actor without allocating a new BallId. */
+USTRUCT(BlueprintType)
+struct PINBALLBATTLE_API FBallHandle
+{
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadOnly) FGuid SessionId;
+    UPROPERTY(BlueprintReadOnly) FGuid BallId;
+    UPROPERTY(BlueprintReadOnly) TWeakObjectPtr<APinballBall> Ball;
+    UPROPERTY(BlueprintReadOnly) EBallDisposition Disposition = EBallDisposition::Ready;
+};

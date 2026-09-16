@@ -66,13 +66,14 @@ bool APinballGameModeBase::RequestLaunch(float Impulse)
 {
     if (!CanLaunch() || !Table->GetBall()->Launch(Table->Plunger->GetLaunchDirection(), Impulse)) return false;
     GameFlow->TransitionTo(EArcadeGameFlowState::PINBALL_PLAYING);
+    Table->NotifyBallLaunched();
     UE_LOG(LogPinballBattle, Log, TEXT("Launch accepted: impulse=%.3f"), Impulse);
     return true;
 }
 
 bool APinballGameModeBase::RequestDrain(APinballBall* Ball)
 {
-    if (!CanPlay() || !Table->IsCurrentBall(Ball) || !Ball->MarkDrained()) return false;
+    if (!CanPlay() || !Table->CanEmitEvent(Ball) || !Ball->MarkDrained()) return false;
     GameFlow->TransitionTo(EArcadeGameFlowState::BALL_LOST);
     Table->CancelActions();
     UE_LOG(LogPinballBattle, Log, TEXT("Drain accepted once: contacts=%d"), Ball->GetContactCount());
@@ -80,6 +81,14 @@ bool APinballGameModeBase::RequestDrain(APinballBall* Ball)
     if (bPracticeMode)
         ReplacementTimer = GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::ReplaceDrainedBall);
     return true;
+}
+
+bool APinballGameModeBase::RequestDrainEvent(const FDrainEvent& Event)
+{
+    if (!Table || !Event.EventId.IsValid() || !Event.SourceId.IsValid() ||
+        Event.SessionId != Table->GetBallHandle().SessionId || Event.BallId != Table->GetBallHandle().BallId ||
+        Event.PhaseEpoch != Table->GetPhysicalEpoch()) return false;
+    return RequestDrain(Table->GetBall());
 }
 
 void APinballGameModeBase::ReplaceDrainedBall()

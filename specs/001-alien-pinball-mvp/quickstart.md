@@ -1,4 +1,11 @@
-﻿# Quickstart and Validation Guide
+# Quickstart and Validation Guide
+
+Phase 3 adds the complete graybox table in `/Game/Cabinets/AlienInvasion/Maps/L_AlienCabinet`:
+four targets, two directed lanes, three bumpers, typed events, flashes/sounds and safe
+trap/escape recovery. Open that map and press Play with the same Down/Left/Right controls.
+See [table-interaction validation](validation/table-interactions.md) for commands and the
+24-cycle, 30/60/120 FPS acceptance results. Run `./Scripts/Run-Phase3Validation.ps1` after
+building to repeat them. The HUD displays interaction counts; scored sessions arrive in Phase 4.
 
 Phase 2 now supplies playable repeat-ball pinball in `L_PhysicsPrototype`: hold/release Down
 to launch, Left/Right to flip, and an automatic new ball after each drain. See

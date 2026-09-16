@@ -7,22 +7,16 @@
 #include "Engine/World.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Engine/StaticMesh.h"
+#include "Pinball/InteractionFeedbackComponent.h"
+#include "Components/PointLightComponent.h"
 
-void UBumperResponseComponent::Initialize(APinballTable* InTable, UPrimitiveComponent* InSurface)
+UBumperResponseComponent::UBumperResponseComponent()
 {
-    if (Surface) Surface->OnComponentHit.RemoveDynamic(this, &ThisClass::OnHit);
-    Table = InTable;
-    Surface = InSurface;
-    Surface->SetNotifyRigidBodyCollision(true);
-    Surface->SetPhysMaterialOverride(Table->Tuning->PhysicalMaterial);
-    Surface->OnComponentHit.AddDynamic(this, &ThisClass::OnHit);
+    Category = EScoringCategory::Bumper;
 }
 
-void UBumperResponseComponent::OnHit(UPrimitiveComponent*, AActor* OtherActor, UPrimitiveComponent*, FVector, const FHitResult&)
+void UBumperResponseComponent::OnQualifiedContact(APinballBall* Ball, const FHitResult& Hit)
 {
-    APinballBall* Ball = Cast<APinballBall>(OtherActor);
-    const APinballGameModeBase* Mode = GetWorld()->GetAuthGameMode<APinballGameModeBase>();
-    if (!Table || !Mode || !Mode->CanPlay() || !Table->IsCurrentBall(Ball) || !Ball->IsLaunched()) return;
     const double Now = GetWorld()->GetTimeSeconds();
     if (Now - LastImpulseTime < Table->Tuning->BumperCooldown) return;
     LastImpulseTime = Now;
@@ -43,4 +37,11 @@ APinballBumper::APinballBumper()
     Surface->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
     Surface->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     Response = CreateDefaultSubobject<UBumperResponseComponent>(TEXT("BumperResponse"));
+    Feedback = CreateDefaultSubobject<UInteractionFeedbackComponent>(TEXT("Feedback"));
+    Flash = CreateDefaultSubobject<UPointLightComponent>(TEXT("Flash"));
+    Flash->SetupAttachment(Surface);
+    Flash->SetRelativeLocation(FVector(0, 0, 110));
+    Flash->SetIntensity(0);
+    Flash->SetAttenuationRadius(240);
+    Flash->SetCastShadows(false);
 }

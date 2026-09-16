@@ -58,8 +58,20 @@ bool APinballBall::Launch(const FVector& Direction, float Impulse)
 void APinballBall::AddBoundedImpulse(const FVector& Impulse)
 {
     if (!Tuning || !IsLaunched() || Impulse.ContainsNaN()) return;
-    const FVector Velocity = Body->GetPhysicsLinearVelocity() + Impulse / Tuning->BallMass;
-    Body->SetPhysicsLinearVelocity(Velocity.GetClampedToMaxSize(Tuning->MaxBallSpeed));
+    FVector Velocity = Body->GetPhysicsLinearVelocity();
+    if (Velocity.ContainsNaN()) return;
+    if (Velocity.SizeSquared() > FMath::Square(Tuning->MaxBallSpeed))
+    {
+        Velocity = Velocity.GetClampedToMaxSize(Tuning->MaxBallSpeed);
+        Body->SetPhysicsLinearVelocity(Velocity);
+    }
+    const FVector Direction = Impulse.GetSafeNormal();
+    const double Along = FVector::DotProduct(Velocity, Direction);
+    // Solve |v + d * dv| <= vmax. Scaling the entire velocity would erase tangent momentum.
+    const double Budget = -Along + FMath::Sqrt(FMath::Max(0., Along * Along +
+        FMath::Square(static_cast<double>(Tuning->MaxBallSpeed)) - Velocity.SizeSquared()));
+    const double DeltaSpeed = FMath::Min(Impulse.Size() / Body->GetMass(), FMath::Max(0., Budget));
+    Body->AddImpulse(Direction * DeltaSpeed * Body->GetMass());
 }
 
 bool APinballBall::MarkDrained()

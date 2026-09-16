@@ -80,14 +80,14 @@ this acceptance gate with more architecture work.
 **Dependencies**: Phase 2. **Independent test**: Reach every target/lane, emit one event per
 hit/traversal, drain/reset, and force trap/escape recovery without duplicate balls.
 
-- [ ] T021 [US1] Extend Source/PinballBattle/Public/Data/PinballSessionTypes.h with FBallHandle and define FScoringEvent/FScoreAward in Source/PinballBattle/Public/Data/ScoringTypes.h; preserve "New spawned entitlement gets a new ID; recover/return preserves ID" and "Event carries a category, not an arbitrary UI delta".
-- [ ] T022 [P] [US1] Implement contact-episode deduplication and separation re-arm in Source/PinballBattle/Private/Pinball/ScoringTargetComponent.cpp; one typed event per genuine hit, not per substep (after T021).
-- [ ] T023 [P] [US1] Implement ordered entry→exit lane completion and departure re-arm in Source/PinballBattle/Private/Pinball/LaneProgressComponent.cpp; reject incomplete/reverse traversal (after T021; independent of T022).
-- [ ] T024 [US1] Add ball/event identities and score contact episodes to Source/PinballBattle/Private/Pinball/BumperResponseComponent.cpp and DrainComponent.cpp in that directory; physical cooldown is not repeated long-contact scoring.
-- [ ] T025 [US1] Implement escape bounds and "10-second trap window; exempt launch/capture areas" in Source/PinballBattle/Private/Pinball/PinballTable.cpp; collision-check fallback release and preserve ball entitlement without award/decrement.
-- [ ] T026 [US1] Author Content/Framework/Pinball/BP_ScoringTarget.uasset and BP_Lane.uasset; populate Content/Cabinets/AlienInvasion/Blueprints/BP_AlienTable.uasset and Content/Cabinets/AlienInvasion/Maps/L_AlienCabinet.umap with >=4 targets, >=2 lanes/ramps, >=3 bumpers, drain, special-objective placeholders and primary/backup return markers.
-- [ ] T027 [US1] Add visible flashes and placeholder/original sounds to Content/Framework/Pinball/BP_ScoringTarget.uasset, BP_Bumper.uasset and BP_Lane.uasset; feedback must not mutate score UI.
-- [ ] T028 [US1] Validate table reachability, distinct events and no-penalty trap/escape recovery; record repeat-ball gameplay in specs/001-alien-pinball-mvp/validation/table-interactions.md.
+- [X] T021 [US1] Extend Source/PinballBattle/Public/Data/PinballSessionTypes.h with FBallHandle and define FScoringEvent/FScoreAward in Source/PinballBattle/Public/Data/ScoringTypes.h; preserve "New spawned entitlement gets a new ID; recover/return preserves ID" and "Event carries a category, not an arbitrary UI delta".
+- [X] T022 [P] [US1] Implement contact-episode deduplication and separation re-arm in Source/PinballBattle/Private/Pinball/ScoringTargetComponent.cpp; one typed event per genuine hit, not per substep (after T021).
+- [X] T023 [P] [US1] Implement ordered entry→exit lane completion and departure re-arm in Source/PinballBattle/Private/Pinball/LaneProgressComponent.cpp; reject incomplete/reverse traversal (after T021; independent of T022).
+- [X] T024 [US1] Add ball/event identities and score contact episodes to Source/PinballBattle/Private/Pinball/BumperResponseComponent.cpp and DrainComponent.cpp in that directory; physical cooldown is not repeated long-contact scoring.
+- [X] T025 [US1] Implement escape bounds and "10-second trap window; exempt launch/capture areas" in Source/PinballBattle/Private/Pinball/PinballTable.cpp; collision-check fallback release and preserve ball entitlement without award/decrement.
+- [X] T026 [US1] Author Content/Framework/Pinball/BP_ScoringTarget.uasset and BP_Lane.uasset; populate Content/Cabinets/AlienInvasion/Blueprints/BP_AlienTable.uasset and Content/Cabinets/AlienInvasion/Maps/L_AlienCabinet.umap with >=4 targets, >=2 lanes/ramps, >=3 bumpers, drain, special-objective placeholders and primary/backup return markers.
+- [X] T027 [US1] Add visible flashes and placeholder/original sounds to Content/Framework/Pinball/BP_ScoringTarget.uasset, BP_Bumper.uasset and BP_Lane.uasset; feedback must not mutate score UI.
+- [X] T028 [US1] Validate table reachability, distinct events and no-penalty trap/escape recovery; record repeat-ball gameplay in specs/001-alien-pinball-mvp/validation/table-interactions.md.
 
 **Checkpoint**: Complete graybox table remains playable; typed producers are ready for scoring.
 
