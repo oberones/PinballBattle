@@ -1,0 +1,18 @@
+# Unreal Engine generated files
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# IDE-generated state and solutions
+.vs/
+.idea/
+*.sln
+*.suo
+*.VC.db
+*.VC.opendb
+
+# Local secrets
+.env
+.env.*
+!.env.example
