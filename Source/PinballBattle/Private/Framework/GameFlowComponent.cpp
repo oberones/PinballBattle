@@ -17,22 +17,55 @@ void UGameFlowComponent::InitializeProjection(APinballGameStateBase* InGameState
     }
 
     GameState = InGameState;
-    GameState->FlowState = CurrentState;
+    GameState->SessionState.FlowState = CurrentState;
     UE_LOG(LogPinballBattle, Log, TEXT("Flow initialized: BOOT"));
 }
 
-bool UGameFlowComponent::TransitionTo(EArcadeGameFlowState Next)
+bool UGameFlowComponent::IsLegalTransition(EArcadeGameFlowState From, EArcadeGameFlowState Next)
 {
     using E = EArcadeGameFlowState;
-    const bool bAllowed = (CurrentState == E::BOOT && Next == E::ATTRACT) ||
-        (CurrentState == E::ATTRACT && Next == E::PINBALL_READY) ||
-        (CurrentState == E::PINBALL_READY && Next == E::PINBALL_PLAYING) ||
-        (CurrentState == E::PINBALL_PLAYING && Next == E::BALL_LOST) ||
-        (CurrentState == E::BALL_LOST && Next == E::PINBALL_READY);
-    if (!bAllowed || !GameState) return false;
+    return (From == E::BOOT && Next == E::ATTRACT) ||
+        (From == E::ATTRACT && Next == E::PINBALL_READY) ||
+        (From == E::PINBALL_READY && Next == E::PINBALL_PLAYING) ||
+        (From == E::PINBALL_PLAYING && Next == E::BALL_LOST) ||
+        (From == E::BALL_LOST && (Next == E::PINBALL_READY || Next == E::GAME_OVER)) ||
+        (From == E::GAME_OVER && Next == E::PINBALL_READY);
+}
+
+bool UGameFlowComponent::TransitionTo(EArcadeGameFlowState Next, bool bPublish)
+{
+    if (!IsLegalTransition(CurrentState, Next) || !GameState) return false;
     UE_LOG(LogPinballBattle, Log, TEXT("Flow: %s -> %s"),
         *UEnum::GetValueAsString(CurrentState), *UEnum::GetValueAsString(Next));
     CurrentState = Next;
-    GameState->FlowState = Next;
+    GameState->SessionState.FlowState = Next;
+    if (bPublish) GameState->PublishSession();
+    return true;
+}
+
+bool UGameFlowComponent::CanPause(EArcadeGameFlowState State)
+{
+    using E = EArcadeGameFlowState;
+    return State == E::PINBALL_READY || State == E::PINBALL_PLAYING || State == E::MINIGAME_TRANSITION ||
+        State == E::MINIGAME_PLAYING || State == E::MINIGAME_RESULTS;
+}
+
+bool UGameFlowComponent::SetPaused(bool bPaused)
+{
+    if (!GameState) return false;
+    if (bPaused)
+    {
+        if (!CanPause(CurrentState)) return false;
+        GameState->SessionState.ResumeState = CurrentState;
+        CurrentState = EArcadeGameFlowState::PAUSED;
+    }
+    else
+    {
+        if (CurrentState != EArcadeGameFlowState::PAUSED || !CanPause(GameState->SessionState.ResumeState)) return false;
+        CurrentState = GameState->SessionState.ResumeState;
+        GameState->SessionState.ResumeState = EArcadeGameFlowState::BOOT;
+    }
+    GameState->SessionState.FlowState = CurrentState;
+    GameState->PublishSession();
     return true;
 }

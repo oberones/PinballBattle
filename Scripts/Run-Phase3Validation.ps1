@@ -15,7 +15,7 @@ $runs = @()
 foreach ($rate in $Rates) {
     $logPath = Join-Path $repo "Saved/Logs/Phase3$RunLabel$rate.log"
     $arguments = @(
-        ('"{0}"' -f $project), '/Game/Cabinets/AlienInvasion/Maps/L_AlienCabinet',
+        ('"{0}"' -f $project), '/Game/Tests/Maps/L_TableInteractions',
         '-game', '-windowed', '-RenderOffscreen', '-ResX=1280', '-ResY=720',
         '-unattended', '-nop4', '-nosplash', '-PinballInteractionProbe',
         "-PinballInteractionCycles=$CyclesPerRate", "-PinballProbeName=$RunLabel$rate",

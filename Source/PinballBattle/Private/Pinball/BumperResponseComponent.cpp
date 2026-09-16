@@ -15,11 +15,18 @@ UBumperResponseComponent::UBumperResponseComponent()
     Category = EScoringCategory::Bumper;
 }
 
+void UBumperResponseComponent::ResetForNewSession()
+{
+    bHasImpulse = false;
+    LastImpulseTime = 0;
+}
+
 void UBumperResponseComponent::OnQualifiedContact(APinballBall* Ball, const FHitResult& Hit)
 {
     const double Now = GetWorld()->GetTimeSeconds();
-    if (Now - LastImpulseTime < Table->Tuning->BumperCooldown) return;
+    if (bHasImpulse && Now - LastImpulseTime < Table->Tuning->BumperCooldown) return;
     LastImpulseTime = Now;
+    bHasImpulse = true;
     const FVector Direction = FVector::VectorPlaneProject(
         Ball->GetActorLocation() - Surface->GetComponentLocation(), Table->GetTableNormal()).GetSafeNormal();
     Ball->AddBoundedImpulse(Direction * Table->Tuning->BumperImpulse);

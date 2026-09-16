@@ -15,10 +15,13 @@ class PINBALLBATTLE_API UBumperResponseComponent : public UScoringTargetComponen
 public:
     /** Identify this contact producer as a powered bumper. */
     UBumperResponseComponent();
+    /** Forget the prior game's coil activation so the first fresh contact can always impart an impulse. */
+    void ResetForNewSession();
 private:
     /** Fire the coil only on a new ring contact; preserve tangent motion and sphere spin. */
     virtual void OnQualifiedContact(APinballBall* Ball, const FHitResult& Hit) override;
-    double LastImpulseTime = -100.;
+    double LastImpulseTime = 0;
+    bool bHasImpulse = false;
 };
 
 /** Simple reusable host; the response also works on other explicitly registered surfaces. */

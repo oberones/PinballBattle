@@ -1,22 +1,32 @@
 # Quickstart and Validation Guide
 
+Phase 4 makes `/Game/Cabinets/AlienInvasion/Maps/L_AlienCabinet` the default startup map.
+Choose **Start**, hold/release **Down** to launch, use **Left/Right** flippers, and press
+**Escape** to pause/resume. After three drains, Game Over shows the locked final score and
+**Restart / Quit**. Enter confirms Start/Resume/Restart; menu buttons support mouse input.
+The cabinet explicitly uses development configuration without minigames for this milestone.
+See [basic-session](validation/basic-session.md), [pause](validation/pause.md) and
+[restart](validation/restart.md) for executed evidence. After building, run
+`./Scripts/Run-Phase4Validation.ps1` for rendered session/input/physics acceptance.
+The `PinballBattle.Score` and `PinballBattle.Flow` Automation filters are now implemented.
+
 Phase 3 adds the complete graybox table in `/Game/Cabinets/AlienInvasion/Maps/L_AlienCabinet`:
 four targets, two directed lanes, three bumpers, typed events, flashes/sounds and safe
 trap/escape recovery. Open that map and press Play with the same Down/Left/Right controls.
 See [table-interaction validation](validation/table-interactions.md) for commands and the
 24-cycle, 30/60/120 FPS acceptance results. Run `./Scripts/Run-Phase3Validation.ps1` after
-building to repeat them. The HUD displays interaction counts; scored sessions arrive in Phase 4.
+building to repeat them. Its repeat-ball/event-count regression now lives in
+`/Game/Tests/Maps/L_TableInteractions`; the runner selects that preserved practice map.
 
 Phase 2 now supplies playable repeat-ball pinball in `L_PhysicsPrototype`: hold/release Down
 to launch, Left/Right to flip, and an automatic new ball after each drain. See
 [first-playable validation](validation/first-playable.md) for launch/build commands and the
 21-cycle, 30/60/120 FPS acceptance results. [Setup validation](validation/setup.md) records
-the earlier empty Phase 1 foundation. Scoring, three-ball sessions, pause and minigames remain
-prospective until their later tasks are implemented.
+the earlier empty Phase 1 foundation. Minigames remain scheduled for Phases 5–8.
 
 To repeat the current rendered physics acceptance after building, run
 `./Scripts/Run-Phase2Validation.ps1`. The current Automation filter is
-`PinballBattle.Practice`; the later Score/Flow/Transition filters below are not implemented yet.
+`PinballBattle.Practice`; Score/Flow are implemented in Phase 4 and Transition arrives in Phase 5.
 
 ## Prerequisites and foundation
 

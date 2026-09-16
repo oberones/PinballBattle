@@ -35,3 +35,18 @@ struct PINBALLBATTLE_API FBallHandle
     UPROPERTY(BlueprintReadOnly) TWeakObjectPtr<APinballBall> Ball;
     UPROPERTY(BlueprintReadOnly) EBallDisposition Disposition = EBallDisposition::Ready;
 };
+
+/** Read-only session projection; GameMode and flow are its only writers. */
+USTRUCT(BlueprintType)
+struct PINBALLBATTLE_API FSessionState
+{
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadOnly) FGuid SessionId;
+    UPROPERTY(BlueprintReadOnly) FGuid CurrentBallId;
+    UPROPERTY(BlueprintReadOnly) int64 Generation = 0;
+    UPROPERTY(BlueprintReadOnly) int32 BallsRemaining = 3;
+    UPROPERTY(BlueprintReadOnly) int32 Multiplier = 1;
+    UPROPERTY(BlueprintReadOnly) EArcadeGameFlowState FlowState = EArcadeGameFlowState::BOOT;
+    UPROPERTY(BlueprintReadOnly) EArcadeGameFlowState ResumeState = EArcadeGameFlowState::BOOT;
+    UPROPERTY(BlueprintReadOnly) TMap<FName, bool> ObjectiveStates;
+};
