@@ -159,7 +159,12 @@ void APinballTable::ResetForNewSession(FGuid SessionId)
     LowMotionSeconds = 0;
     RecoveryCount = 0;
     for (int32& Count : InteractionCounts) Count = 0;
-    for (APinballBumper* Bumper : Bumpers) if (IsValid(Bumper)) Bumper->Feedback->ResetFeedback();
+    for (APinballBumper* Bumper : Bumpers)
+    {
+        if (!IsValid(Bumper)) continue;
+        Bumper->Response->ResetForNewSession();
+        Bumper->Feedback->ResetFeedback();
+    }
     for (APinballScoringTarget* Target : Targets) if (IsValid(Target)) Target->Feedback->ResetFeedback();
     for (APinballLane* Lane : Lanes) if (IsValid(Lane)) Lane->Feedback->ResetFeedback();
 }

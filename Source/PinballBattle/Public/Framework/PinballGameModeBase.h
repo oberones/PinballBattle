@@ -38,8 +38,8 @@ public:
     bool RequestDrainEvent(const FDrainEvent& Event);
     /** Expose the registered table without searching actors by names. */
     APinballTable* GetTable() const { return Table; }
-    /** Start or restart only from the corresponding menu state, using a fresh session identity. */
-    bool RequestNewSession();
+    /** Prepare a fresh session from a menu; preserve the final score and return a retry notice on failure. */
+    bool RequestNewSession(FText* OutFailure = nullptr);
     /** Freeze or resume the current playable phase through native world pause. */
     bool RequestTogglePause(APlayerController* Controller);
     /** Invalidate all callbacks before stopping timers/actors on Quit or teardown. */
@@ -65,6 +65,7 @@ private:
     void ReplaceDrainedBall();
     UPROPERTY(Transient) TObjectPtr<APinballTable> Table;
     FTimerHandle ReplacementTimer;
+    bool bStartingSession = false;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pinball|Flow", meta = (AllowPrivateAccess = "true"))
     TObjectPtr<UGameFlowComponent> GameFlow;
 };

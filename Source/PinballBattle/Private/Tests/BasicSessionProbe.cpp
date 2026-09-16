@@ -21,6 +21,10 @@
 #include "HAL/PlatformMisc.h"
 #include "UnrealClient.h"
 #include "PinballBattle.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/Button.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Layout/WidgetPath.h"
 
 ABasicSessionProbe::ABasicSessionProbe()
 {
@@ -35,9 +39,53 @@ void ABasicSessionProbe::BeginPlay()
 #if UE_BUILD_SHIPPING
     SetActorTickEnabled(false);
 #else
-    SetActorTickEnabled(FParse::Param(FCommandLine::Get(), TEXT("PinballSessionProbe")));
+    bRemediation = FParse::Param(FCommandLine::Get(), TEXT("PinballSessionRemediationProbe"));
+    SetActorTickEnabled(bRemediation || FParse::Param(FCommandLine::Get(), TEXT("PinballSessionProbe")));
 #endif
     StartedAt = StepAt = FPlatformTime::Seconds();
+    FParse::Value(FCommandLine::Get(), TEXT("PinballProbeSessions="), Budget.Sessions);
+    FParse::Value(FCommandLine::Get(), TEXT("PinballProbeBalls="), Budget.BallsPerSession);
+    FParse::Value(FCommandLine::Get(), TEXT("PinballProbeBallSeconds="), Budget.PerBallSeconds);
+    Budget.SetupAndMenuSeconds = 20 * Budget.Sessions;
+    FParse::Value(FCommandLine::Get(), TEXT("PinballProbeOverheadSeconds="), Budget.SetupAndMenuSeconds);
+    Budget.TotalSeconds = Budget.RequiredSeconds();
+    FParse::Value(FCommandLine::Get(), TEXT("PinballProbeTotalSeconds="), Budget.TotalSeconds);
+    if (IsActorTickEnabled())
+        UE_LOG(LogPinballBattle, Display, TEXT("PHASE4 budget: sessions=%d balls=%d perBall=%.1fs overhead=%.1fs total=%.1fs (wall time includes pause)"),
+            Budget.Sessions, Budget.BallsPerSession, Budget.PerBallSeconds, Budget.SetupAndMenuSeconds, Budget.TotalSeconds);
+}
+
+bool ABasicSessionProbe::ClickMenuButton(FName Name)
+{
+    auto* Menu = Controller ? Controller->GetPresentation() : nullptr;
+    auto* Button = Menu && Menu->WidgetTree ? Cast<UButton>(Menu->WidgetTree->FindWidget(Name)) : nullptr;
+    if (!Button || !Button->GetCachedWidget().IsValid() || !Controller->bShowMouseCursor || !FSlateApplication::IsInitialized()) return false;
+    auto& Slate = FSlateApplication::Get();
+    const FVector2D Position = Button->GetCachedGeometry().GetAbsolutePositionAtCoordinates(FVector2D(.5, .5));
+    const FWidgetPath HitPath = Slate.LocateWindowUnderMouse(Position, Slate.GetInteractiveTopLevelWindows());
+    if (!HitPath.IsValid() || !HitPath.ContainsWidget(Button->GetCachedWidget().Get())) return false;
+    TSet<FKey> Pressed;
+    Pressed.Add(EKeys::LeftMouseButton);
+    const FPointerEvent Down(0, Position, Position, Pressed, EKeys::LeftMouseButton, 0, FModifierKeysState());
+    Slate.ProcessMouseMoveEvent(Down, true);
+    const bool bDown = Slate.ProcessMouseButtonDownEvent(HitPath.GetWindow()->GetNativeWindow(), Down);
+    Pressed.Reset();
+    const FPointerEvent Up(0, Position, Position, Pressed, EKeys::LeftMouseButton, 0, FModifierKeysState());
+    const bool bUp = Slate.ProcessMouseButtonUpEvent(Up);
+    UE_LOG(LogPinballBattle, Display, TEXT("PHASE4 menu pointer: %s screen=%d handled=%d/%d"), *Name.ToString(), int32(Menu->Screen), bDown, bUp);
+    return bDown && bUp;
+}
+
+bool ABasicSessionProbe::ConfirmMenu()
+{
+    auto* Menu = Controller ? Controller->GetPresentation() : nullptr;
+    if (!Menu || !Menu->HasUserFocus(Controller) || !Controller->bShowMouseCursor) return false;
+    auto& Slate = FSlateApplication::Get();
+    const FKeyEvent Enter(EKeys::Enter, FModifierKeysState(), 0, false, 13, 13);
+    const bool bHandled = Slate.ProcessKeyDownEvent(Enter);
+    Slate.ProcessKeyUpEvent(Enter);
+    UE_LOG(LogPinballBattle, Display, TEXT("PHASE4 menu Enter: focused widget handled=%d"), bHandled);
+    return bHandled;
 }
 
 void ABasicSessionProbe::Key(FKey Input, bool bPressed)
@@ -60,15 +108,17 @@ void ABasicSessionProbe::Screenshot(const FString& Name)
 void ABasicSessionProbe::Finish(bool bSuccess, const FString& Reason)
 {
     if (bFinished) return;
+    if (bSuccess && !bRemediation && !ClickMenuButton(TEXT("QuitButton")))
+    { Finish(false, TEXT("Quit button did not handle pointer input")); return; }
     bFinished = true;
-    const FString Summary = FString::Printf(TEXT("PINBALL_SESSION_%s: %s; sessions=%d launches=%d drains=%d movingPauses=%d restarts=%d score=%lld"),
-        bSuccess ? TEXT("PASS") : TEXT("FAIL"), *Reason, Sessions, Launches, Drains, Pauses, FMath::Max(0, Sessions - 1),
+    const FString Summary = FString::Printf(TEXT("PINBALL_%s_%s: %s; sessions=%d launches=%d drains=%d movingPauses=%d restarts=%d score=%lld"),
+        bRemediation ? TEXT("REMEDIATION") : TEXT("SESSION"), bSuccess ? TEXT("PASS") : TEXT("FAIL"), *Reason, Sessions, Launches, Drains, Pauses, FMath::Max(0, Sessions - 1),
         State ? State->GetScoring()->GetTotalScore() : 0);
     UE_LOG(LogPinballBattle, Display, TEXT("%s"), *Summary);
     IFileManager::Get().MakeDirectory(*(FPaths::ProjectSavedDir() / TEXT("Automation/Phase4")), true);
-    FFileHelper::SaveStringToFile(Summary, *(FPaths::ProjectSavedDir() / TEXT("Automation/Phase4/Session.txt")));
-    if (bSuccess) Controller->RequestQuitIntent();
-    else FPlatformMisc::RequestExitWithStatus(false, 1);
+    FFileHelper::SaveStringToFile(Summary, *(FPaths::ProjectSavedDir() / TEXT("Automation/Phase4") /
+        (bRemediation ? TEXT("Remediation.txt") : TEXT("Session.txt"))));
+    if (!bSuccess || bRemediation) FPlatformMisc::RequestExitWithStatus(false, bSuccess ? 0 : 1);
 }
 
 void ABasicSessionProbe::Tick(float DeltaSeconds)
@@ -77,7 +127,9 @@ void ABasicSessionProbe::Tick(float DeltaSeconds)
     if (bFinished) return;
     const double Now = FPlatformTime::Seconds();
     const double Age = Now - StepAt;
-    if (Now - StartedAt > 420) { Finish(false, TEXT("Session harness deadline")); return; }
+    if (!Budget.IsValid()) { Finish(false, TEXT("Invalid session probe budget")); return; }
+    if (FSessionProbeBudget::HasExpired(Now - StartedAt, bRemediation ? 30 : Budget.TotalSeconds))
+    { Finish(false, TEXT("Session harness deadline")); return; }
     if (!Mode)
     {
         Mode = GetWorld()->GetAuthGameMode<APinballGameModeBase>();
@@ -86,6 +138,7 @@ void ABasicSessionProbe::Tick(float DeltaSeconds)
         Table = Mode ? Mode->GetTable() : nullptr;
         if (!Mode || !Controller || !State || !Table) return;
     }
+    if (bRemediation) { TickRemediation(Age); return; }
     const FSessionState Snapshot = State->GetSessionState();
     using E = EArcadeGameFlowState;
     if (Stage == 0 && Age > 1)
@@ -98,7 +151,7 @@ void ABasicSessionProbe::Tick(float DeltaSeconds)
     }
     else if (Stage == 1 && Age > .4)
     {
-        Controller->RequestStartIntent();
+        if (!ClickMenuButton(TEXT("PrimaryButton"))) { Finish(false, TEXT("Start button input failed")); return; }
         Step(2);
     }
     else if (Stage == 2 && Age > .25)
@@ -108,6 +161,8 @@ void ABasicSessionProbe::Tick(float DeltaSeconds)
         if (Snapshot.FlowState != E::PINBALL_READY || Snapshot.BallsRemaining != 3 || Snapshot.Multiplier != 1 ||
             State->GetScoring()->GetTotalScore() != 0 || Balls != 1 || Snapshot.SessionId == PreviousSession || !Snapshot.SessionId.IsValid())
         { Finish(false, TEXT("Fresh session did not reset to score=0 balls=3 multiplier=1 and one new ball")); return; }
+        if (Snapshot.Generation != Sessions + 1)
+        { Finish(false, FString::Printf(TEXT("Generation expected=%d actual=%lld"), Sessions + 1, Snapshot.Generation)); return; }
         PreviousSession = Snapshot.SessionId;
         ++Sessions;
         UE_LOG(LogPinballBattle, Display, TEXT("PHASE4 fresh session=%d generation=%lld score=0 balls=3 multiplier=1 actors=1"), Sessions, Snapshot.Generation);
@@ -175,7 +230,8 @@ void ABasicSessionProbe::Tick(float DeltaSeconds)
             Key(EKeys::Escape, true);
             Step(7);
         }
-        else if (Now - PlayingAt > 65) { Finish(false, TEXT("Natural ball did not drain within 65 seconds")); }
+        else if (FSessionProbeBudget::HasExpired(Now - PlayingAt, Budget.PerBallSeconds))
+        { Finish(false, FString::Printf(TEXT("Natural ball exceeded %.1f wall seconds including pause"), Budget.PerBallSeconds)); }
     }
     else if (Stage == 7 && Age > .15)
     {
@@ -203,7 +259,11 @@ void ABasicSessionProbe::Tick(float DeltaSeconds)
         { Finish(false, TEXT("Pause changed bodies, velocity, score, clock or accepted gameplay")); return; }
         ++Pauses;
         UE_LOG(LogPinballBattle, Display, TEXT("PHASE4 pause=%d frozen ball/flippers/velocity/score/world clock; stale events rejected"), Pauses);
-        Key(EKeys::Escape, true);
+        if (Pauses == 1)
+        {
+            if (!ClickMenuButton(TEXT("PrimaryButton"))) { Finish(false, TEXT("Moving Resume button input failed")); return; }
+        }
+        else Key(EKeys::Escape, true);
         Step(9);
     }
     else if (Stage == 9 && Age > .15)
@@ -220,12 +280,17 @@ void ABasicSessionProbe::Tick(float DeltaSeconds)
         Table->PublishScoringEvent(StaleScore);
         if (Mode->RequestLaunch(100) || Mode->RequestDrainEvent(StaleDrain) || State->GetScoring()->GetTotalScore() != LockedScore)
         { Finish(false, TEXT("Game-over score/input lock failed")); return; }
-        if (Sessions == 3)
+        if (Sessions == Budget.Sessions)
         {
             if (Pauses != 3) { Finish(false, TEXT("Missing moving pause coverage")); return; }
-            Finish(true, TEXT("Three natural scored sessions; 3->2->1->0 each; frozen native pause; two clean restarts; invoking Quit"));
+            Finish(true, TEXT("Natural scored sessions; 3->2->1->0 each; asserted generations; frozen pause; menu clicks/Enter; Quit clicked"));
         }
-        else { Controller->RequestStartIntent(); Step(2); }
+        else
+        {
+            const bool bHandled = Sessions == 1 ? ClickMenuButton(TEXT("PrimaryButton")) : ConfirmMenu();
+            if (!bHandled) { Finish(false, TEXT("Restart menu input failed")); return; }
+            Step(2);
+        }
     }
     else if (Stage == 11 && Age > .1)
     {
@@ -259,8 +324,7 @@ void ABasicSessionProbe::Tick(float DeltaSeconds)
         Key(EKeys::Down, false);
         if (Snapshot.FlowState != E::PAUSED || Snapshot.ResumeState != E::PINBALL_READY || Table->Plunger->IsCharging())
         { Finish(false, TEXT("Pausing a charged plunger did not cancel it")); return; }
-        // Exercise the menu Resume intent as well as the mapped Escape path used below.
-        Controller->RequestPauseIntent();
+        if (!ConfirmMenu()) { Finish(false, TEXT("Ready Resume keyboard input failed")); return; }
         Step(16);
     }
     else if (Stage == 16 && Age > .25)

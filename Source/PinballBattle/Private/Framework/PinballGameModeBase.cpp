@@ -130,26 +130,52 @@ void APinballGameModeBase::ReplaceDrainedBall()
     GameFlow->TransitionTo(EArcadeGameFlowState::PINBALL_READY);
 }
 
-bool APinballGameModeBase::RequestNewSession()
+bool APinballGameModeBase::RequestNewSession(FText* OutFailure)
 {
+    if (OutFailure) *OutFailure = FText::GetEmpty();
     const auto Flow = GameFlow->GetCurrentState();
-    if (bPracticeMode || !Cabinet || !Table || (Flow != EArcadeGameFlowState::ATTRACT && Flow != EArcadeGameFlowState::GAME_OVER)) return false;
+    if (bStartingSession || bPracticeMode || (Flow != EArcadeGameFlowState::ATTRACT && Flow != EArcadeGameFlowState::GAME_OVER)) return false;
+    TGuardValue<bool> StartingGuard(bStartingSession, true);
     auto* State = GetGameState<APinballGameStateBase>();
+    auto* Player = GetWorld()->GetFirstPlayerController();
     FString Error;
-    if (!Cabinet->Validate(Table, GetWorld()->GetFirstPlayerController()->GetPawn(), Error)) return false;
-    // Invalidate identities first, before notifications, timer cancellation or actor teardown.
-    State->SessionState.SessionId = FGuid::NewGuid();
+    const FGuid CandidateId = FGuid::NewGuid();
+    UPinballScoringComponent::FPreparedSession PreparedScore;
+    if (!IsValid(State) || !IsValid(State->Scoring) || !IsValid(Cabinet) || !IsValid(Table) || !IsValid(Player) ||
+        !Cabinet->Validate(Table, Player->GetPawn(), Error) ||
+        !UPinballScoringComponent::PrepareSession(CandidateId, Cabinet->ScoringProfile, PreparedScore))
+    {
+        UE_LOG(LogPinballBattle, Warning, TEXT("New session configuration rejected: %s"), *Error);
+        if (OutFailure) *OutFailure = FText::FromString(TEXT("Unable to start: cabinet setup is unavailable. Please try again."));
+        return false;
+    }
+    // Invalidate old deferred work before actor/timer cleanup. A failed attempt still consumes a generation.
+    // Keep the terminal session and score intact until all fallible preparation has succeeded.
     ++State->SessionState.Generation;
+    GetWorldTimerManager().ClearTimer(ReplacementTimer);
+    Table->ResetForNewSession(CandidateId);
+    if (!Table->SpawnReadyBall())
+    {
+        Table->ResetForNewSession(State->SessionState.SessionId);
+        State->PublishSession();
+        if (OutFailure) *OutFailure = FText::FromString(TEXT("Unable to place the ball. Clear the launch lane and try again."));
+        return false;
+    }
+
+    // No latent work or callbacks occur between these writes; publish only after every owner agrees.
+    State->SessionState.SessionId = CandidateId;
     State->SessionState.CurrentBallId.Invalidate();
     State->SessionState.BallsRemaining = 3;
     State->SessionState.Multiplier = 1;
     State->SessionState.ResumeState = EArcadeGameFlowState::BOOT;
     State->SessionState.ObjectiveStates.Reset();
-    GetWorldTimerManager().ClearTimer(ReplacementTimer);
-    Table->ResetForNewSession(State->SessionState.SessionId);
-    if (!State->Scoring->ResetSession(State->SessionState.SessionId, Cabinet->ScoringProfile) || !Table->SpawnReadyBall()) return false;
     State->SessionState.CurrentBallId = Table->GetBallHandle().BallId;
-    return GameFlow->TransitionTo(EArcadeGameFlowState::PINBALL_READY);
+    State->Scoring->CommitSession(MoveTemp(PreparedScore));
+    const bool bCommitted = GameFlow->TransitionTo(EArcadeGameFlowState::PINBALL_READY, false);
+    check(bCommitted); // The menu edge was validated before preparation; no notification can re-enter it.
+    State->PublishSession();
+    State->Scoring->PublishReset();
+    return true;
 }
 
 void APinballGameModeBase::HandleTableScore(const FScoringEvent& Event)

@@ -18,22 +18,44 @@ bool UPinballScoringComponent::CalculateAward(double BasePoints, int32 Multiplie
 
 bool UPinballScoringComponent::ResetSession(FGuid SessionId, const UScoringProfile* Profile)
 {
+    FPreparedSession Prepared;
+    if (!PrepareSession(SessionId, Profile, Prepared)) return false;
+    CommitSession(MoveTemp(Prepared));
+    PublishReset();
+    return true;
+}
+
+bool UPinballScoringComponent::PrepareSession(FGuid SessionId, const UScoringProfile* Profile, FPreparedSession& Prepared)
+{
     FString Error;
     if (!SessionId.IsValid() || !Profile || !Profile->Validate(Error)) return false;
-    ActiveSession = SessionId;
-    CategoryPoints.Reset();
-    for (const FTableScoreRule& Rule : Profile->Categories) CategoryPoints.Add(Rule.Category, Rule.BasePoints);
-    MinimumMultiplier = Profile->MinimumMultiplier;
-    MaximumMultiplier = Profile->MaximumMultiplier;
-    ProfileRevision = Profile->Revision;
+    Prepared.SessionId = SessionId;
+    Prepared.CategoryPoints.Reset();
+    for (const FTableScoreRule& Rule : Profile->Categories) Prepared.CategoryPoints.Add(Rule.Category, Rule.BasePoints);
+    Prepared.MinimumMultiplier = Profile->MinimumMultiplier;
+    Prepared.MaximumMultiplier = Profile->MaximumMultiplier;
+    Prepared.ProfileRevision = Profile->Revision;
+    return true;
+}
+
+void UPinballScoringComponent::CommitSession(FPreparedSession&& Prepared)
+{
+    ActiveSession = Prepared.SessionId;
+    CategoryPoints = MoveTemp(Prepared.CategoryPoints);
+    MinimumMultiplier = Prepared.MinimumMultiplier;
+    MaximumMultiplier = Prepared.MaximumMultiplier;
+    ProfileRevision = Prepared.ProfileRevision;
     AcceptedEvents.Reset();
     SourceSequences.Reset();
     SequenceBall.Invalidate();
     TotalScore = 0;
     LatestAward = FScoreAward();
-    LatestAward.SessionId = SessionId;
+    LatestAward.SessionId = ActiveSession;
+}
+
+void UPinballScoringComponent::PublishReset()
+{
     OnScoreChanged.Broadcast(LatestAward);
-    return true;
 }
 
 bool UPinballScoringComponent::SubmitTableScore(const FScoringEvent& Event, const FSessionState& State, const FBallHandle& Ball, int64 Epoch)

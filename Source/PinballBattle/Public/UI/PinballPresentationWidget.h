@@ -28,13 +28,15 @@ public:
     virtual FReply NativeOnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event) override;
     /** Expose displayed values for rendered acceptance checks without gameplay authority. */
     FString GetStatusText() const;
+    /** Show a retryable start failure without requiring a flow change or replacing the final score. */
+    void ShowStartFailure(const FText& Failure);
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) EPinballScreen Screen = EPinballScreen::HUD;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) FText Heading;
 private:
     /** Create a readable label in the menu column without a per-frame binding. */
     UTextBlock* AddLabel(UVerticalBox* Column, const FText& Text, int32 Size);
     /** Create a focusable button with a text child; callers connect intent delegates. */
-    UButton* AddButton(UVerticalBox* Column, const FText& Text);
+    UButton* AddButton(UVerticalBox* Column, const FText& Text, FName Name);
     /** Refresh projected score/ball information after a session notification. */
     UFUNCTION() void OnSession(const FSessionState& State);
     /** Refresh score presentation after a committed central award/reset. */
@@ -44,5 +46,6 @@ private:
     /** Send Quit to the controller; this widget never tears down gameplay itself. */
     UFUNCTION() void QuitIntent();
     UPROPERTY(Transient) TObjectPtr<UTextBlock> Status;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> Notice;
     UPROPERTY(Transient) TObjectPtr<APinballGameStateBase> StateSource;
 };

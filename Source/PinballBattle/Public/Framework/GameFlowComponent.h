@@ -30,8 +30,8 @@ private:
     friend class FPinballFlowTest;
     /** Bind the GameState projection owned by this GameMode's world. */
     void InitializeProjection(APinballGameStateBase* InGameState);
-    /** Commit a legal edge and notify observers only after the projection agrees. */
-    bool TransitionTo(EArcadeGameFlowState Next);
+    /** Commit a legal edge; session transactions can defer notification until all owners agree. */
+    bool TransitionTo(EArcadeGameFlowState Next, bool bPublish = true);
     /** Save one underlying state or restore it, rejecting nested pause and repeated resume. */
     bool SetPaused(bool bPaused);
 

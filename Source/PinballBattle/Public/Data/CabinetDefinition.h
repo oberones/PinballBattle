@@ -25,6 +25,8 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly) TObjectPtr<UScoringProfile> ScoringProfile;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) TObjectPtr<UPinballTuningData> Tuning;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) int32 InitialBalls = 3;
+    /** Phase 5 special-objective rearm delay after minigame return; pause freezes it and exit/re-entry is also required.
+     * Ordinary trap recovery and score/drain gates do not use this delay. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly) double ReturnTriggerProtectionSeconds = 1;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) double ResultsPresentationSeconds = 3;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) bool bDevelopmentWithoutMinigames = true;

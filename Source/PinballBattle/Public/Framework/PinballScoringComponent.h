@@ -24,6 +24,21 @@ private:
     friend class APinballGameModeBase;
     friend class FPinballScoreTest;
     friend class FPinballRestartTest;
+    /** Validated immutable values staged before a new session can replace the current ledger. */
+    struct FPreparedSession
+    {
+        FGuid SessionId;
+        TMap<EScoringCategory, double> CategoryPoints;
+        FName ProfileRevision;
+        int32 MinimumMultiplier = 1;
+        int32 MaximumMultiplier = 10;
+    };
+    /** Validate and copy new settings without changing the current score or notifying observers. */
+    static bool PrepareSession(FGuid SessionId, const UScoringProfile* Profile, FPreparedSession& Prepared);
+    /** Install prepared settings and clear the ledger without publishing a partial session. */
+    void CommitSession(FPreparedSession&& Prepared);
+    /** Notify score observers only after the matching session and flow have been committed. */
+    void PublishReset();
     /** Capture validated profile values and invalidate all previous accepted-event identities. */
     bool ResetSession(FGuid SessionId, const UScoringProfile* Profile);
     /** Validate the authoritative phase/ball/epoch and commit ledger plus total before notification. */

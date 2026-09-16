@@ -32,14 +32,14 @@ bool UGameFlowComponent::IsLegalTransition(EArcadeGameFlowState From, EArcadeGam
         (From == E::GAME_OVER && Next == E::PINBALL_READY);
 }
 
-bool UGameFlowComponent::TransitionTo(EArcadeGameFlowState Next)
+bool UGameFlowComponent::TransitionTo(EArcadeGameFlowState Next, bool bPublish)
 {
     if (!IsLegalTransition(CurrentState, Next) || !GameState) return false;
     UE_LOG(LogPinballBattle, Log, TEXT("Flow: %s -> %s"),
         *UEnum::GetValueAsString(CurrentState), *UEnum::GetValueAsString(Next));
     CurrentState = Next;
     GameState->SessionState.FlowState = Next;
-    GameState->PublishSession();
+    if (bPublish) GameState->PublishSession();
     return true;
 }
 

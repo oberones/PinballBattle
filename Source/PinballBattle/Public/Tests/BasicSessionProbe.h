@@ -3,6 +3,7 @@
 #include "GameFramework/Actor.h"
 #include "Data/ScoringTypes.h"
 #include "InputCoreTypes.h"
+#include "Tests/SessionProbeBudget.h"
 #include "BasicSessionProbe.generated.h"
 
 class APinballGameModeBase;
@@ -25,6 +26,20 @@ public:
 private:
     /** Inject a press/release through the controller's real Enhanced Input path. */
     void Key(FKey Input, bool bPressed);
+    /** Hit-test a visible menu button and route a real Slate pointer press/release to it. */
+    bool ClickMenuButton(FName Name);
+    /** Send Enter through the focused Slate widget instead of invoking a controller intent. */
+    bool ConfirmMenu();
+    /** Run isolated spawn-failure, retry, publication and bumper-cooldown fixtures on the real cabinet. */
+    void TickRemediation(double Age);
+    /** Check reset publication while callbacks can synchronously inspect every authoritative owner. */
+    UFUNCTION() void ObserveResetSession(const FSessionState& Snapshot);
+    /** Check that score-reset notifications reference the committed ready session. */
+    UFUNCTION() void ObserveResetScore(const FScoreAward& Award);
+    /** Obstruct the actual spawn, verify preserved terminal state, then retry through the controller. */
+    bool CheckFailedStartAndRetry();
+    /** Inject one qualified surface contact while observing the production coil and score pipeline. */
+    void StrikeTestBumper();
     /** Begin a new timed harness step using wall time so pause cannot stall validation. */
     void Step(int32 Next);
     /** Record bounded acceptance evidence and exit through the actual Quit intent on success. */
@@ -55,4 +70,11 @@ private:
     FScoringEvent StaleScore;
     FDrainEvent StaleDrain;
     bool bFinished = false;
+    FSessionProbeBudget Budget;
+    bool bRemediation = false;
+    bool bObservingReset = false;
+    bool bResetObservationFailed = false;
+    int32 ResetScoreNotifications = 0;
+    int32 ResetReadyNotifications = 0;
+    float OriginalBumperCooldown = 0;
 };

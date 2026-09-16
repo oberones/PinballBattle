@@ -25,9 +25,9 @@ UTextBlock* UPinballPresentationWidget::AddLabel(UVerticalBox* Column, const FTe
     return Label;
 }
 
-UButton* UPinballPresentationWidget::AddButton(UVerticalBox* Column, const FText& Text)
+UButton* UPinballPresentationWidget::AddButton(UVerticalBox* Column, const FText& Text, FName Name)
 {
-    auto* Button = WidgetTree->ConstructWidget<UButton>();
+    auto* Button = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), Name);
     auto* Label = WidgetTree->ConstructWidget<UTextBlock>();
     Label->SetText(Text);
     FSlateFontInfo Font = Label->GetFont();
@@ -59,9 +59,11 @@ void UPinballPresentationWidget::NativeOnInitialized()
     if (Screen != EPinballScreen::HUD)
     {
         const TCHAR* Label = Screen == EPinballScreen::Start ? TEXT("Start") : Screen == EPinballScreen::Pause ? TEXT("Resume") : TEXT("Restart");
-        AddButton(Column, FText::FromString(Label))->OnClicked.AddDynamic(this, &ThisClass::PrimaryIntent);
-        AddButton(Column, FText::FromString(TEXT("Quit")))->OnClicked.AddDynamic(this, &ThisClass::QuitIntent);
+        AddButton(Column, FText::FromString(Label), TEXT("PrimaryButton"))->OnClicked.AddDynamic(this, &ThisClass::PrimaryIntent);
+        AddButton(Column, FText::FromString(TEXT("Quit")), TEXT("QuitButton"))->OnClicked.AddDynamic(this, &ThisClass::QuitIntent);
         AddLabel(Column, FText::FromString(TEXT("Enter to confirm")), 14);
+        Notice = AddLabel(Column, FText::GetEmpty(), 18);
+        Notice->SetWrapTextAt(360);
     }
     else SetVisibility(ESlateVisibility::HitTestInvisible);
 }
@@ -125,5 +127,11 @@ FReply UPinballPresentationWidget::NativeOnKeyDown(const FGeometry& Geometry, co
 
 FString UPinballPresentationWidget::GetStatusText() const
 {
-    return Status ? Status->GetText().ToString() : FString();
+    return (Status ? Status->GetText().ToString() : FString()) +
+        (Notice ? TEXT("\n") + Notice->GetText().ToString() : FString());
+}
+
+void UPinballPresentationWidget::ShowStartFailure(const FText& Failure)
+{
+    if (Notice) Notice->SetText(Failure);
 }

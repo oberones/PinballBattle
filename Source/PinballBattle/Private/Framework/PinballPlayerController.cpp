@@ -190,7 +190,12 @@ void APinballPlayerController::RefreshPresentation(const FSessionState& State)
 
 void APinballPlayerController::RequestStartIntent()
 {
-    if (auto* Mode = GetWorld()->GetAuthGameMode<APinballGameModeBase>()) Mode->RequestNewSession();
+    if (auto* Mode = GetWorld()->GetAuthGameMode<APinballGameModeBase>())
+    {
+        FText Failure;
+        if (!Mode->RequestNewSession(&Failure) && !Failure.IsEmpty() && Presentation)
+            Presentation->ShowStartFailure(Failure);
+    }
 }
 
 void APinballPlayerController::RequestPauseIntent()
