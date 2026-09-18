@@ -122,7 +122,7 @@ bool UTableSessionComponent::PrepareRestore(FTableSuspendSnapshot& S)
     {
         if (B.Body == Table->GetBall()->GetBody())
         { B.Transform.SetLocation(Location); B.LinearVelocity = Velocity; B.AngularVelocityRadians = FVector::ZeroVector; B.bAwake = true; }
-        else { B.Transform = B.Body->GetComponentTransform(); B.LinearVelocity = FVector::ZeroVector; B.AngularVelocityRadians = FVector::ZeroVector; }
+else { B.LinearVelocity = FVector::ZeroVector; B.AngularVelocityRadians = FVector::ZeroVector; }
         B.Body->SetWorldTransform(B.Transform, false, nullptr, ETeleportType::TeleportPhysics);
     }
     S.bPrepared = true; return true;
