@@ -4,6 +4,11 @@
 #include "UObject/ConstructorHelpers.h"
 #include "Engine/StaticMesh.h"
 
+// Suspension is cancellation, never release-fire.
+bool APinballPlunger::SuspendForMinigame(int64 Generation) { CancelActions(); return Generation > 0; }
+// A fresh post-return press is required to begin another charge.
+bool APinballPlunger::PrepareRestore(int64 Generation) { CancelActions(); return Generation > 0; }
+
 APinballPlunger::APinballPlunger()
 {
     PrimaryActorTick.bCanEverTick = true;

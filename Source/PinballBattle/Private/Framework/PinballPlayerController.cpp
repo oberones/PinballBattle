@@ -14,6 +14,11 @@
 #include "Data/CabinetDefinition.h"
 #include "UI/PinballPresentationWidget.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Framework/GameFlowComponent.h"
+#include "Data/MiniGameDefinition.h"
+#include "Minigames/Shared/MiniGameRuntimeBase.h"
+#include "Minigames/Shared/MinigameWorldSubsystem.h"
+#include "Framework/Application/SlateApplication.h"
 
 APinballPlayerController::APinballPlayerController()
 {
@@ -55,10 +60,11 @@ void APinballPlayerController::BeginPlay()
         *GetNameSafe(GetPawn()), *GetNameSafe(GetViewTarget()));
 }
 
+// Minigame swaps set their own explicit view target instead of reconfiguring the pinball table.
 void APinballPlayerController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
-    if (Table)
+    if (Table && !bModeSwap)
     {
         ConfigureTable(Table);
     }
@@ -68,8 +74,10 @@ void APinballPlayerController::OnPossess(APawn* InPawn)
     }
 }
 
+// Remove all controller-owned contexts and presentation subscriptions during teardown.
 void APinballPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+    DisableMiniGameInput();
     CancelActions();
     if (ControlsWidget) ControlsWidget->RemoveFromParent();
     if (Presentation) Presentation->RemoveFromParent();
@@ -89,11 +97,12 @@ void APinballPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
     Super::EndPlay(EndPlayReason);
 }
 
+// Register the persistent pawn and explicit camera once, retaining a return fallback across run possession.
 void APinballPlayerController::ConfigureTable(APinballTable* InTable)
 {
     Table = InTable;
     if (!IsLocalController() || !Table) return;
-    if (APinballControlPawn* ControlPawn = Cast<APinballControlPawn>(GetPawn())) ControlPawn->SetTable(Table);
+    if (APinballControlPawn* ControlPawn = Cast<APinballControlPawn>(GetPawn())) { ControlPawn->SetTable(Table); PersistentPinballPawn = ControlPawn; }
     SetViewTarget(Table);
     const auto* Mode = GetWorld()->GetAuthGameMode<APinballGameModeBase>();
     if (auto* State = GetWorld()->GetGameState<APinballGameStateBase>())
@@ -155,9 +164,10 @@ void APinballPlayerController::SetGameplayInput(bool bEnabled)
     }
 }
 
+// Public state plus internal transition phase select screens; clocks and awards remain in flow.
 void APinballPlayerController::RefreshPresentation(const FSessionState& State)
 {
-    if (!IsLocalController() || State.FlowState == LastPresentedState) return;
+    if (!IsLocalController() || (State.FlowState == LastPresentedState && State.FlowState != EArcadeGameFlowState::MINIGAME_TRANSITION && State.FlowState != EArcadeGameFlowState::BOOT)) return;
     const auto Previous = LastPresentedState;
     LastPresentedState = State.FlowState;
     const bool bGameplay = State.FlowState == EArcadeGameFlowState::PINBALL_READY || State.FlowState == EArcadeGameFlowState::PINBALL_PLAYING;
@@ -167,18 +177,28 @@ void APinballPlayerController::RefreshPresentation(const FSessionState& State)
     const auto* Mode = GetWorld()->GetAuthGameMode<APinballGameModeBase>();
     const auto* Cabinet = Mode ? Mode->GetCabinet() : nullptr;
     if (!Cabinet) return;
+    const auto* Flow = Mode->FindComponentByClass<UGameFlowComponent>();
     TSubclassOf<UPinballPresentationWidget> Class = Cabinet->HUDWidget;
     if (State.FlowState == EArcadeGameFlowState::ATTRACT) Class = Cabinet->StartWidget;
     if (State.FlowState == EArcadeGameFlowState::PAUSED) Class = Cabinet->PauseWidget;
     if (State.FlowState == EArcadeGameFlowState::GAME_OVER) Class = Cabinet->GameOverWidget;
+    if (State.FlowState == EArcadeGameFlowState::MINIGAME_TRANSITION || State.FlowState == EArcadeGameFlowState::BOOT) Class = Cabinet->InstructionsWidget;
+    if (State.FlowState == EArcadeGameFlowState::MINIGAME_TRANSITION && Flow->GetTransition().Phase == ETransitionPhase::RecoveryMenu) Class = Cabinet->RecoveryWidget;
+    if (State.FlowState == EArcadeGameFlowState::BOOT && Flow->HasBootFailed()) Class = Cabinet->RecoveryWidget;
+    if (State.FlowState == EArcadeGameFlowState::MINIGAME_PLAYING) Class = Cabinet->MiniGameHUDWidget;
+    if (State.FlowState == EArcadeGameFlowState::MINIGAME_RESULTS) Class = Cabinet->ResultsWidget;
+    if (!Class) Class = Cabinet->HUDWidget;
     if (!Presentation || Presentation->GetClass() != Class)
     {
         if (Presentation) Presentation->RemoveFromParent();
         Presentation = CreateWidget<UPinballPresentationWidget>(this, Class);
         if (Presentation) Presentation->AddToViewport(10);
     }
-    bShowMouseCursor = !bGameplay;
-    if (bGameplay) SetInputMode(FInputModeGameOnly());
+    if (State.FlowState == EArcadeGameFlowState::PAUSED) DisableMiniGameInput();
+    if (Previous == EArcadeGameFlowState::PAUSED && State.FlowState == EArcadeGameFlowState::MINIGAME_PLAYING)
+        EnableMiniGameInput(GetWorld()->GetSubsystem<UMinigameWorldSubsystem>()->GetActiveRun().Definition);
+    bShowMouseCursor = !bGameplay && State.FlowState != EArcadeGameFlowState::MINIGAME_PLAYING;
+    if (bGameplay || State.FlowState == EArcadeGameFlowState::MINIGAME_PLAYING) SetInputMode(FInputModeGameOnly());
     else
     {
         FInputModeGameAndUI InputMode;
@@ -186,6 +206,109 @@ void APinballPlayerController::RefreshPresentation(const FSessionState& State)
         InputMode.SetHideCursorDuringCapture(false);
         SetInputMode(InputMode);
     }
+}
+
+// Capture occurs before possession/context mutation, retaining weak persistent targets.
+bool APinballPlayerController::CaptureMiniGameMode(int64 Generation, FControllerModeSnapshot& S)
+{
+    if (!Table || !GetPawn() || !GetViewTarget()) return false;
+    S.Pawn = GetPawn(); S.ViewTarget = GetViewTarget(); S.GameplayContext = PinballMappingContext;
+    S.bShowCursor = bShowMouseCursor; S.Generation = Generation; ModeGeneration = Generation;
+    if (FSlateApplication::IsInitialized()) S.Focus = FSlateApplication::Get().GetUserFocusedWidget(0);
+    CancelActions(); SetGameplayInput(false);
+    return true;
+}
+// A camera cut avoids blending across the spatial gap between table and arena.
+bool APinballPlayerController::SwitchToMiniGame(AMiniGameRuntimeBase* Runtime)
+{
+    if (!IsValid(Runtime) || !Runtime->HasPresentationTargets()) return false;
+    TGuardValue<bool> Guard(bModeSwap, true); MiniGameRuntime = Runtime; Possess(Runtime->GetRunPawn()); SetViewTarget(Runtime);
+    bFreshMiniGameInput = false; bSpaceWasDown = IsInputKeyDown(EKeys::SpaceBar); bEnterWasDown = IsInputKeyDown(EKeys::Enter);
+    return GetPawn() == Runtime->GetRunPawn() && GetViewTarget() == Runtime;
+}
+// Immediate Enhanced Input rebuild suppresses held Boolean keys; PlayerTick also requires neutral axes.
+bool APinballPlayerController::EnableMiniGameInput(const UMiniGameDefinition* D)
+{
+    auto* Input = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
+    auto* Enhanced = Cast<UEnhancedInputComponent>(InputComponent);
+    if (!Input || !Enhanced || !D || !D->InputContext.Get() || !D->ActionInput.Get() || !MiniGameRuntime.IsValid() || GetPawn() != MiniGameRuntime->GetRunPawn()) return false;
+    DisableMiniGameInput(); MiniGameMappingContext = D->InputContext.Get();
+    FModifyContextOptions Options; Options.bForceImmediately = true; Options.bIgnoreAllPressedKeysUntilRelease = true;
+    Input->AddMappingContext(MiniGameMappingContext, 0, Options); bFreshMiniGameInput = false;
+    MiniGameActionBinding = Enhanced->BindAction(D->ActionInput.Get(), ETriggerEvent::Started, this, &ThisClass::MiniGameActionPressed).GetHandle();
+    return Input->HasMappingContext(MiniGameMappingContext);
+}
+// Common mappings remain installed so Escape/menu work in every phase.
+void APinballPlayerController::DisableMiniGameInput()
+{
+    if (MiniGameActionBinding) if (auto* Enhanced = Cast<UEnhancedInputComponent>(InputComponent)) Enhanced->RemoveBindingByHandle(MiniGameActionBinding);
+    MiniGameActionBinding = 0;
+    if (auto* Input = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+        if (MiniGameMappingContext) Input->RemoveMappingContext(MiniGameMappingContext);
+    MiniGameMappingContext = nullptr; bFreshMiniGameInput = false;
+}
+// Releasing the arena's pawn and camera is a prerequisite for registry cleanup.
+bool APinballPlayerController::RestoreMiniGameMode(const FControllerModeSnapshot& S)
+{
+    if (!IsValid(Table) || S.Generation != ModeGeneration) return false;
+    APawn* ReturnPawn = S.Pawn.IsValid() ? S.Pawn.Get() : PersistentPinballPawn.Get();
+    if (!ReturnPawn)
+    {
+        const auto* Mode = GetWorld()->GetAuthGameMode<APinballGameModeBase>();
+        const auto* Cabinet = Mode ? Mode->GetCabinet() : nullptr;
+        if (!Cabinet || !Cabinet->ControlPawnClass) return false;
+        auto* Replacement = GetWorld()->SpawnActor<APinballControlPawn>(Cabinet->ControlPawnClass, Table->GetActorTransform());
+        if (!Replacement) return false;
+        Replacement->SetTable(Table); PersistentPinballPawn = Replacement; ReturnPawn = Replacement;
+    }
+    DisableMiniGameInput(); TGuardValue<bool> Guard(bModeSwap, true);
+    Possess(ReturnPawn); SetViewTarget(S.ViewTarget.IsValid() ? S.ViewTarget.Get() : Table.Get());
+    bShowMouseCursor = S.bShowCursor; MiniGameRuntime.Reset();
+    if (S.Focus.IsValid() && FSlateApplication::IsInitialized()) FSlateApplication::Get().SetUserFocus(0, S.Focus.Pin());
+    return GetPawn() == ReturnPawn && GetViewTarget() != nullptr;
+}
+// The visible status is a projection of flow and runtime progress, never a source of timing truth.
+void APinballPlayerController::UpdateMiniGameStatus(const FText& Status)
+{
+    if (Presentation && LastPresentedState != EArcadeGameFlowState::PAUSED) Presentation->ShowMiniGameStatus(Status);
+}
+// Poll physical releases to consume confirmation and block held Space/arrows across both boundaries.
+void APinballPlayerController::PlayerTick(float DeltaSeconds)
+{
+    Super::PlayerTick(DeltaSeconds);
+    auto* Mode = GetWorld()->GetAuthGameMode<APinballGameModeBase>();
+    auto* Flow = Mode ? Mode->FindComponentByClass<UGameFlowComponent>() : nullptr;
+    const bool Space = IsInputKeyDown(EKeys::SpaceBar), Enter = IsInputKeyDown(EKeys::Enter);
+    const bool AxesNeutral = AreMiniGameAxesNeutral();
+    const bool Neutral = !Space && !Enter && AxesNeutral;
+    if (Flow && Flow->GetCurrentState() != EArcadeGameFlowState::PAUSED)
+    {
+        if (Neutral) bFreshMiniGameInput = true;
+        if (bFreshMiniGameInput && ((Space && !bSpaceWasDown) || (Enter && !bEnterWasDown)))
+        {
+            if (AxesNeutral && Flow->GetTransition().Phase == ETransitionPhase::AwaitingConfirmation) { bFreshMiniGameInput = false; Flow->ConfirmMiniGame(); }
+        }
+    }
+    bSpaceWasDown = Space; bEnterWasDown = Enter;
+}
+// Confirmation never calls this handler; only the installed minigame Enhanced Input context can.
+void APinballPlayerController::MiniGameActionPressed()
+{
+    if (IsMiniGameInputReady() && MiniGameRuntime.IsValid()) MiniGameRuntime->SubmitAction();
+}
+// Unlike Boolean held-key suppression, analog axes require an explicit physical-neutral observation.
+bool APinballPlayerController::AreMiniGameAxesNeutral() const
+{
+    if (IsInputKeyDown(EKeys::Left) || IsInputKeyDown(EKeys::Right) || IsInputKeyDown(EKeys::Down) || IsInputKeyDown(EKeys::Up)) return false;
+    if (MiniGameMappingContext) for (const auto& Mapping : MiniGameMappingContext->GetMappings())
+        if (Mapping.Action && Mapping.Action->ValueType != EInputActionValueType::Boolean &&
+            FMath::Abs(GetInputAnalogKeyState(Mapping.Key)) > .01f) return false;
+    return true;
+}
+// Explicit recovery retry is separate from restart and cannot silently discard progress.
+void APinballPlayerController::RequestRetryIntent()
+{
+    if (auto* Mode = GetWorld()->GetAuthGameMode<APinballGameModeBase>()) Mode->FindComponentByClass<UGameFlowComponent>()->RetryReturn();
 }
 
 void APinballPlayerController::RequestStartIntent()

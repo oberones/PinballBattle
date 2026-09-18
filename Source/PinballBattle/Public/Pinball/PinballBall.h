@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Pinball/TableSuspendParticipant.h"
 #include "PinballBall.generated.h"
 
 class USphereComponent;
@@ -8,10 +9,14 @@ class UStaticMeshComponent;
 class UPinballTuningData;
 
 UCLASS()
-class PINBALLBATTLE_API APinballBall : public AActor
+class PINBALLBATTLE_API APinballBall : public AActor, public ITableSuspendParticipant
 {
     GENERATED_BODY()
 public:
+    /** A consumed/unlaunched ball cannot participate in a minigame transaction. */
+    virtual bool CaptureState(int64 Generation) override;
+    /** Recreate an existing active entitlement without firing a launch impulse. */
+    void RestoreActiveEntitlement();
     /** Construct the CCD sphere root and noncolliding visual shell. */
     APinballBall();
     /** Apply validated dimensions, mass, material and damping before launch. */

@@ -10,6 +10,11 @@
 #include "Pinball/InteractionFeedbackComponent.h"
 #include "Components/PointLightComponent.h"
 
+// The world keeps running during minigames, so absolute cooldown timestamps need rebasing.
+bool UBumperResponseComponent::CaptureState(int64 Generation) { SuspendedAt = GetWorld()->GetTimeSeconds(); return Generation > 0; }
+// Preserve the exact remaining cooldown instead of granting an early coil activation.
+void UBumperResponseComponent::CommitRestore(int64 Generation) { if (bHasImpulse) LastImpulseTime += GetWorld()->GetTimeSeconds() - SuspendedAt; }
+
 UBumperResponseComponent::UBumperResponseComponent()
 {
     Category = EScoringCategory::Bumper;

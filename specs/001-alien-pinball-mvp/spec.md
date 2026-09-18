@@ -6,7 +6,13 @@
 
 **Created**: 2026-09-15
 
-**Status**: Draft — validated for planning
+**Status**: Implementation in progress — Phases 1–6 complete; Phase 6 closed on 2026-09-18
+
+**Current delivery closeout**: Phase 6 / US3 (T067–T074) is implemented and validated,
+including the nose-alignment and left/right steering corrections accepted during playtesting.
+See [Phase 6 evidence](validation/asteroid-field.md) for build, automation, asset and rendered
+gameplay results. Phases 7–11 (T075–T110) remain open; this closes the current delivery,
+not the full three-minigame MVP or its final acceptance gates.
 
 **Input**: One complete alien-themed pinball cabinet combining a three-ball game with
 Asteroid Field, Planetary Defense, and Alien Assault; performance earns bonuses before

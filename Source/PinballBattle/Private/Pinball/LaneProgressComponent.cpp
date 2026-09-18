@@ -9,6 +9,9 @@
 #include "UObject/ConstructorHelpers.h"
 #include "Engine/StaticMesh.h"
 
+// A safe-return teleport is not an entry-to-exit traversal.
+void ULaneProgressComponent::CommitRestore(int64 Generation) { Traversal.Reset(); bHasPrevious = false; Epoch = -1; }
+
 ULaneProgressComponent::ULaneProgressComponent()
 {
     PrimaryComponentTick.bCanEverTick = true;

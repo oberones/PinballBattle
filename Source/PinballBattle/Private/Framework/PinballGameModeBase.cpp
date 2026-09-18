@@ -37,6 +37,7 @@ bool APinballGameModeBase::RegisterTable(APinballTable* InTable)
     return true;
 }
 
+// Validate table/cabinet first, then wait for asynchronous arena readiness before enabling Start.
 void APinballGameModeBase::StartPlay()
 {
     Super::StartPlay(); // Table BeginPlay registers before boot prerequisites are inspected.
@@ -51,7 +52,7 @@ void APinballGameModeBase::StartPlay()
     Table->OnScoringEvent.AddUniqueDynamic(this, &ThisClass::HandleTableScore);
     if (APinballPlayerController* Controller = Cast<APinballPlayerController>(GetWorld()->GetFirstPlayerController()))
         Controller->ConfigureTable(Table);
-    GameFlow->TransitionTo(EArcadeGameFlowState::ATTRACT);
+    GameFlow->BeginMiniGameBoot();
     if (bPracticeMode)
     {
         auto* State = GetGameState<APinballGameStateBase>();
@@ -130,11 +131,13 @@ void APinballGameModeBase::ReplaceDrainedBall()
     GameFlow->TransitionTo(EArcadeGameFlowState::PINBALL_READY);
 }
 
+// Menu restart and explicit secured-recovery restart share the same prepared-session boundary.
 bool APinballGameModeBase::RequestNewSession(FText* OutFailure)
 {
     if (OutFailure) *OutFailure = FText::GetEmpty();
     const auto Flow = GameFlow->GetCurrentState();
-    if (bStartingSession || bPracticeMode || (Flow != EArcadeGameFlowState::ATTRACT && Flow != EArcadeGameFlowState::GAME_OVER)) return false;
+    const bool RecoveryRestart = Flow == EArcadeGameFlowState::MINIGAME_TRANSITION && GameFlow->GetTransition().Phase == ETransitionPhase::RecoveryMenu;
+    if (bStartingSession || bPracticeMode || (Flow != EArcadeGameFlowState::ATTRACT && Flow != EArcadeGameFlowState::GAME_OVER && !RecoveryRestart)) return false;
     TGuardValue<bool> StartingGuard(bStartingSession, true);
     auto* State = GetGameState<APinballGameStateBase>();
     auto* Player = GetWorld()->GetFirstPlayerController();
@@ -153,6 +156,7 @@ bool APinballGameModeBase::RequestNewSession(FText* OutFailure)
     // Keep the terminal session and score intact until all fallible preparation has succeeded.
     ++State->SessionState.Generation;
     GetWorldTimerManager().ClearTimer(ReplacementTimer);
+    if (RecoveryRestart) GameFlow->ResetForRecoveryRestart();
     Table->ResetForNewSession(CandidateId);
     if (!Table->SpawnReadyBall())
     {
@@ -198,6 +202,7 @@ bool APinballGameModeBase::RequestTogglePause(APlayerController* Controller)
     return GameFlow->SetPaused(true);
 }
 
+// Invalidate identities before cleanup; teardown must never attempt a return into the dying world.
 void APinballGameModeBase::InvalidateSession()
 {
     if (auto* State = GetGameState<APinballGameStateBase>())
@@ -207,6 +212,7 @@ void APinballGameModeBase::InvalidateSession()
         ++State->SessionState.Generation;
     }
     GetWorldTimerManager().ClearTimer(ReplacementTimer);
+    GameFlow->CancelForTeardown();
     if (IsValid(Table))
     {
         Table->OnScoringEvent.RemoveDynamic(this, &ThisClass::HandleTableScore);

@@ -31,3 +31,12 @@ resume, forbidden transitions and exact saved-state restoration checks.
 Evidence: `Saved/Logs/Phase4Session.log` (`PHASE4 pause=1/2/3` and ready-pause markers),
 `Saved/Automation/Phase4/Pause.png`, and `Saved/Automation/Phase4Tests/index.json`.
 These are automated rendered gameplay checks; no human playtest is claimed.
+# Phase 5 extension
+
+The generic round-trip fixture now pauses Securing, Preparing, awaiting confirmation,
+Playing, Results and Returning. It also pauses just before the common 30-second timeout.
+It checks unchanged phase/active clocks, frozen table bodies and timer remaining times,
+then resumes the exact phase once with fresh input guards. See
+[framework-roundtrip.md](framework-roundtrip.md) and the `PinballBattle.Transition.RoundTrips`
+Automation report for the executed scenarios. This extends rather than replaces the Phase 4
+moving-ball acceptance below.

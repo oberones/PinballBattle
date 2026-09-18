@@ -59,6 +59,14 @@ public:
     virtual void Tick(float DeltaSeconds) override;
     /** Secure the same ball, then try collision-checked primary and backup release paths. */
     bool RecoverBall();
+    /** Find the first collision-clear authored return marker without enabling physics. */
+    bool FindSafeReturn(FVector& Location, FVector& Velocity) const;
+    /** Close event identities immediately on accepted activation, before physical suspension. */
+    void SecureForMiniGame();
+    /** Reopen the same entitlement after the body/controller barrier completes. */
+    void CommitMiniGameReturn();
+    /** Recreate only a missing actor at a validated release, preserving SessionId/BallId. */
+    bool EnsureReturnBall();
     /** Count successful relocations for development evidence, not scoring. */
     int32 GetRecoveryCount() const { return RecoveryCount; }
     /** Expose accepted interaction counts to the temporary practice presentation. */

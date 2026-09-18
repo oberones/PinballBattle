@@ -2,6 +2,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Data/ScoringTypes.h"
+#include "Data/ScoringProfile.h"
 #include "PinballScoringComponent.generated.h"
 
 class UScoringProfile;
@@ -20,16 +21,24 @@ public:
     /** Multiply once, floor once, then reject conversion/addition overflow before changing output. */
     static bool CalculateAward(double BasePoints, int32 Multiplier, int64 Total, int64& Points, int64& NewTotal);
     UPROPERTY(BlueprintAssignable) FPinballScoreChanged OnScoreChanged;
+    UPROPERTY(BlueprintAssignable) FPinballScoreChanged OnBonusAwarded;
 private:
     friend class APinballGameModeBase;
     friend class FPinballScoreTest;
     friend class FPinballRestartTest;
+    friend class UGameFlowComponent;
+    friend class FMiniGameScoreTest;
+    /** Copy the session-captured reward rule into a fresh accepted run. */
+    bool CaptureMiniGameProfile(FName Key, FMiniGameContext& Context) const;
+    /** Finalize every accepted run, including zero/failure, before broadcasting one award. */
+    bool EvaluateAndAwardMiniGame(const FMiniGameResult& Result, const FMiniGameContext& Context, FScoreAward& Award);
     /** Validated immutable values staged before a new session can replace the current ledger. */
     struct FPreparedSession
     {
         FGuid SessionId;
         TMap<EScoringCategory, double> CategoryPoints;
         FName ProfileRevision;
+        TArray<FMiniGameScoreRule> MiniGameRules;
         int32 MinimumMultiplier = 1;
         int32 MaximumMultiplier = 10;
     };
@@ -53,4 +62,6 @@ private:
     int32 MaximumMultiplier = 10;
     int64 TotalScore = 0;
     FScoreAward LatestAward;
+    TArray<FMiniGameScoreRule> MiniGameRules;
+    TMap<FGuid, FScoreAward> FinalizedRuns;
 };

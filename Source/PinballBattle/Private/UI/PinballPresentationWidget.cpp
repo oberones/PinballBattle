@@ -39,6 +39,7 @@ UButton* UPinballPresentationWidget::AddButton(UVerticalBox* Column, const FText
     return Button;
 }
 
+// Build content-selected menus and passive round presentation; confirmation is consumed by controller.
 void UPinballPresentationWidget::NativeOnInitialized()
 {
     Super::NativeOnInitialized();
@@ -55,8 +56,11 @@ void UPinballPresentationWidget::NativeOnInitialized()
     Panel->SetContent(Column);
     AddLabel(Column, Heading, 28);
     Status = AddLabel(Column, FText::GetEmpty(), 23);
-    AddLabel(Column, FText::FromString(TEXT("LEFT / RIGHT  Flippers\nDOWN  Hold / release to launch\nESCAPE  Pause / resume")), 16);
-    if (Screen != EPinballScreen::HUD)
+    if (Screen >= EPinballScreen::Instructions) Status->SetWrapTextAt(420);
+    if (Screen < EPinballScreen::Instructions) AddLabel(Column, FText::FromString(TEXT("LEFT / RIGHT  Flippers\nDOWN  Hold / release to launch\nESCAPE  Pause / resume")), 16);
+    if (Screen == EPinballScreen::Recovery)
+        AddButton(Column, FText::FromString(TEXT("Retry")), TEXT("RetryButton"))->OnClicked.AddDynamic(this, &ThisClass::RetryIntent);
+    if (Screen == EPinballScreen::Start || Screen == EPinballScreen::Pause || Screen == EPinballScreen::GameOver || Screen == EPinballScreen::Recovery)
     {
         const TCHAR* Label = Screen == EPinballScreen::Start ? TEXT("Start") : Screen == EPinballScreen::Pause ? TEXT("Resume") : TEXT("Restart");
         AddButton(Column, FText::FromString(Label), TEXT("PrimaryButton"))->OnClicked.AddDynamic(this, &ThisClass::PrimaryIntent);
@@ -89,8 +93,10 @@ void UPinballPresentationWidget::NativeDestruct()
     Super::NativeDestruct();
 }
 
+// Round screens receive their summary directly from flow; preserve ordinary session HUD behavior.
 void UPinballPresentationWidget::OnSession(const FSessionState& State)
 {
+    if (Screen >= EPinballScreen::Instructions) return;
     if (!Status || !StateSource) return;
     const TCHAR* Hint = State.FlowState == EArcadeGameFlowState::PINBALL_READY ? TEXT("Ready to launch") :
         State.FlowState == EArcadeGameFlowState::PAUSED ? TEXT("PAUSED") :
@@ -119,11 +125,19 @@ void UPinballPresentationWidget::QuitIntent()
     if (auto* Controller = Cast<APinballPlayerController>(GetOwningPlayer())) Controller->RequestQuitIntent();
 }
 
+// Instructions leave Enter/Space to the controller's release-gated confirmation boundary.
 FReply UPinballPresentationWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event)
 {
-    if (!Event.IsRepeat() && Event.GetKey() == EKeys::Enter) { PrimaryIntent(); return FReply::Handled(); }
+    if (Screen < EPinballScreen::Instructions && !Event.IsRepeat() && Event.GetKey() == EKeys::Enter) { PrimaryIntent(); return FReply::Handled(); }
     return Super::NativeOnKeyDown(Geometry, Event);
 }
+
+// Update only passive round screens so ordinary session/pause labels cannot be overwritten.
+void UPinballPresentationWidget::ShowMiniGameStatus(const FText& Text)
+{ if (Status && Screen >= EPinballScreen::Instructions) Status->SetText(Text); }
+// Retry is an explicit flow intent, never a widget-owned timer or cleanup operation.
+void UPinballPresentationWidget::RetryIntent()
+{ if (auto* Controller = Cast<APinballPlayerController>(GetOwningPlayer())) Controller->RequestRetryIntent(); }
 
 FString UPinballPresentationWidget::GetStatusText() const
 {

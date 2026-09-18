@@ -31,6 +31,21 @@ bool FPinballFlowTest::RunTest(const FString&)
         TestFalse(TEXT("No duplicate continuation"), Flow->SetPaused(false));
     }
     TestTrue(TEXT("Launch"), Flow->TransitionTo(E::PINBALL_PLAYING));
+    TestTrue(TEXT("Objective closes pinball"), Flow->TransitionTo(E::MINIGAME_TRANSITION));
+    for (E Phase : {E::MINIGAME_TRANSITION, E::MINIGAME_PLAYING, E::MINIGAME_RESULTS})
+    {
+        if (Phase != E::MINIGAME_TRANSITION) TestTrue(TEXT("Round phase edge"), Flow->TransitionTo(Phase));
+        Flow->Transition.PhaseSeconds = 1.25;
+        TestTrue(TEXT("Pause each round phase"), Flow->SetPaused(true));
+        TestFalse(TEXT("No duplicate overlay"), Flow->SetPaused(true));
+        TestFalse(TEXT("No return while paused"), Flow->TransitionTo(E::PINBALL_PLAYING));
+        TestEqual(TEXT("Phase clock preserved"), Flow->Transition.PhaseSeconds, 1.25);
+        TestTrue(TEXT("Resume once"), Flow->SetPaused(false));
+        TestEqual(TEXT("Exact phase restored"), Flow->GetCurrentState(), Phase);
+        TestFalse(TEXT("No second continuation"), Flow->SetPaused(false));
+    }
+    TestTrue(TEXT("Return begins"), Flow->TransitionTo(E::MINIGAME_TRANSITION));
+    TestTrue(TEXT("Return commits"), Flow->TransitionTo(E::PINBALL_PLAYING));
     TestTrue(TEXT("Moving-phase pause"), Flow->SetPaused(true));
     TestFalse(TEXT("Drain rejected during pause"), Flow->TransitionTo(E::BALL_LOST));
     TestTrue(TEXT("Resume exact playing phase"), Flow->SetPaused(false));

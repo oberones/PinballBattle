@@ -36,6 +36,18 @@ struct PINBALLBATTLE_API FBallHandle
     UPROPERTY(BlueprintReadOnly) EBallDisposition Disposition = EBallDisposition::Ready;
 };
 
+/** Objective rearm requires both an active-time delay and a fresh physical traversal. */
+USTRUCT(BlueprintType)
+struct FObjectiveState
+{
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadOnly) FName MiniGameId;
+    UPROPERTY(BlueprintReadOnly) bool bAvailable = true;
+    UPROPERTY(BlueprintReadOnly) bool bCompleted = false;
+    UPROPERTY(BlueprintReadOnly) bool bExited = true;
+    UPROPERTY(BlueprintReadOnly) FGuid LastRunId;
+};
+
 /** Read-only session projection; GameMode and flow are its only writers. */
 USTRUCT(BlueprintType)
 struct PINBALLBATTLE_API FSessionState
@@ -48,5 +60,5 @@ struct PINBALLBATTLE_API FSessionState
     UPROPERTY(BlueprintReadOnly) int32 Multiplier = 1;
     UPROPERTY(BlueprintReadOnly) EArcadeGameFlowState FlowState = EArcadeGameFlowState::BOOT;
     UPROPERTY(BlueprintReadOnly) EArcadeGameFlowState ResumeState = EArcadeGameFlowState::BOOT;
-    UPROPERTY(BlueprintReadOnly) TMap<FName, bool> ObjectiveStates;
+    UPROPERTY(BlueprintReadOnly) TMap<FName, FObjectiveState> ObjectiveStates;
 };
