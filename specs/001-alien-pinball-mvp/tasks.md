@@ -173,14 +173,14 @@ contracts are proven before the individual games are implemented.
 **Independent test**: Timeout and all-lives-lost runs, correct bonus and return with siblings
 absent from the test cabinet.
 
-- [ ] T067 [US3] Implement Source/PinballBattle/Private/Minigames/AsteroidField/AsteroidFieldRuntime.cpp with three local lives, owned spawns/damage, common clock/end guard, success at timeout and destruction/result metrics per contracts/gameplay.md.
-- [ ] T068 [P] [US3] Implement Source/PinballBattle/Private/Minigames/AsteroidField/AsteroidShipPawn.cpp with rotate/thrust/fire, bounded planar swept movement and visible rebound (after T067).
-- [ ] T069 [P] [US3] Implement Source/PinballBattle/Private/Minigames/AsteroidField/AsteroidObstacle.cpp and AsteroidProjectile.cpp in that directory with drift/rebound, once-only destruction and run identity (after T067; independent of T068).
-- [ ] T070 [US3] Integrate damage, protected respawn and >=20 attainable objects within 30 seconds in Source/PinballBattle/Private/Minigames/AsteroidField/AsteroidFieldRuntime.cpp; never change pinball balls and defer optional object splitting.
-- [ ] T071 [US3] Author Content/Minigames/AsteroidField/Blueprints/BP_AsteroidFieldRuntime.uasset, BP_AsteroidShip.uasset, BP_AsteroidObstacle.uasset and BP_AsteroidProjectile.uasset in that directory plus Content/Minigames/AsteroidField/Maps/L_MG_AsteroidField.umap; original placeholders, explicit camera/root/bounds and dormant startup.
-- [ ] T072 [US3] Author Content/Minigames/AsteroidField/Data/DA_MG_AsteroidField.uasset and Content/Minigames/AsteroidField/Input/IMC_AsteroidField.uasset; Left/Right/Up/Space, 30 seconds/three lives, local HUD/instructions, visible and audible feedback for each accepted object destruction, and bonus examples 2 objects→1,000/20→10,000.
-- [ ] T073 [US3] Create Content/Tests/Data/DA_AsteroidTestCabinet.uasset for the common harness and serially add the development asteroid association to Content/Cabinets/AlienInvasion/Data/DA_AlienCabinet.uasset; no shared-code special case.
-- [ ] T074 [US3] Verify controls/rebounds, once-only kills with visible and audible scoring feedback, protected lives, both endings, attainable bonuses and return; record specs/001-alien-pinball-mvp/validation/asteroid-field.md.
+- [X] T067 [US3] Implement Source/PinballBattle/Private/Minigames/AsteroidField/AsteroidFieldRuntime.cpp with three local lives, owned spawns/damage, common clock/end guard, success at timeout and destruction/result metrics per contracts/gameplay.md.
+- [X] T068 [P] [US3] Implement Source/PinballBattle/Private/Minigames/AsteroidField/AsteroidShipPawn.cpp with rotate/thrust/fire, bounded planar swept movement and visible rebound (after T067).
+- [X] T069 [P] [US3] Implement Source/PinballBattle/Private/Minigames/AsteroidField/AsteroidObstacle.cpp and AsteroidProjectile.cpp in that directory with drift/rebound, once-only destruction and run identity (after T067; independent of T068).
+- [X] T070 [US3] Integrate damage, protected respawn and >=20 attainable objects within 30 seconds in Source/PinballBattle/Private/Minigames/AsteroidField/AsteroidFieldRuntime.cpp; never change pinball balls and defer optional object splitting.
+- [X] T071 [US3] Author Content/Minigames/AsteroidField/Blueprints/BP_AsteroidFieldRuntime.uasset, BP_AsteroidShip.uasset, BP_AsteroidObstacle.uasset and BP_AsteroidProjectile.uasset in that directory plus Content/Minigames/AsteroidField/Maps/L_MG_AsteroidField.umap; original placeholders, explicit camera/root/bounds and dormant startup.
+- [X] T072 [US3] Author Content/Minigames/AsteroidField/Data/DA_MG_AsteroidField.uasset and Content/Minigames/AsteroidField/Input/IMC_AsteroidField.uasset; Left/Right/Up/Space, 30 seconds/three lives, local HUD/instructions, visible and audible feedback for each accepted object destruction, and bonus examples 2 objects→1,000/20→10,000.
+- [X] T073 [US3] Create Content/Tests/Data/DA_AsteroidTestCabinet.uasset for the common harness and serially add the development asteroid association to Content/Cabinets/AlienInvasion/Data/DA_AlienCabinet.uasset; no shared-code special case.
+- [X] T074 [US3] Verify controls/rebounds, once-only kills with visible and audible scoring feedback, protected lives, both endings, attainable bonuses and return; record specs/001-alien-pinball-mvp/validation/asteroid-field.md.
 
 **Checkpoint**: First real minigame is independently playable from pinball.
 

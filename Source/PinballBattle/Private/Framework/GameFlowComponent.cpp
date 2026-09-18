@@ -284,7 +284,7 @@ FText UGameFlowComponent::GetMiniGameStatus() const
 {
     if (CurrentState == EArcadeGameFlowState::BOOT) return FText::FromString(bBootFailed ? TEXT("Arena loading failed. Retry or Quit.") : TEXT("Loading arenas..."));
     if (Transition.Phase == ETransitionPhase::AwaitingConfirmation) return FText::FromString(Definition->Instructions.ToString() + TEXT("\nRelease keys, then press SPACE or ENTER to start."));
-    if (Transition.Phase == ETransitionPhase::Playing && Runtime.IsValid()) return FText::FromString(FString::Printf(TEXT("Time remaining: %.1f\nLocal score: %lld\nSPACE: action     ESCAPE: pause"), Transition.Context.DurationLimit - Runtime->GetElapsed(), Runtime->GetLocalScore()));
+    if (Transition.Phase == ETransitionPhase::Playing && Runtime.IsValid()) return FText::FromString(FString::Printf(TEXT("Time remaining: %.1f\nLocal score: %lld\n%s"), Transition.Context.DurationLimit - Runtime->GetElapsed(), Runtime->GetLocalScore(), *Runtime->GetLocalStatus().ToString()));
     if (Transition.Phase == ETransitionPhase::Results) return FText::FromString(FString::Printf(TEXT("Round complete\nBonus: %lld"), Transition.Award.AwardedPoints));
     if (Transition.Phase == ETransitionPhase::RecoveryMenu) return FText::FromString(TEXT("Unable to restore the table safely. Retry, Restart or Quit."));
     if (Transition.Phase == ETransitionPhase::Recovering) return FText::FromString(TEXT("The round could not continue. Returning to your ball..."));

@@ -46,6 +46,8 @@ public:
     double GetElapsed() const { return Elapsed; }
     /** Project local informational score without exposing the central scoring service. */
     int64 GetLocalScore() const { return BuildResult().RawScore; }
+    /** Let independent games project local rules through the common HUD. */
+    virtual FText GetLocalStatus() const { return FText::FromString(TEXT("SPACE: action     ESCAPE: pause")); }
     /** Read the explicit possessed actor owned by this run. */
     APawn* GetRunPawn() const { return RunPawn; }
     /** Supply the boot-resolved class before Initialize; no synchronous activation load. */
