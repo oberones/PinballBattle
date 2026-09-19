@@ -40,7 +40,7 @@ UReturnBallProbe::EResult UReturnBallProbe::Tick(float DeltaSeconds, FString& Fa
     const float PivotY = Frame.InverseTransformPosition(Flipper->GetActorLocation()).Y;
     if (!bPressed && Position.Y < PivotY + 50 && Velocity.Y < 0)
     { Key(bLeft ? EKeys::Left : EKeys::Right, true); bPressed = true; PressAt = Age; }
-    if (bContact && Velocity.Y > 150 && Position.Y > PivotY + 100 && PressAt >= .6f)
+    if (bContact && Velocity.Y > 150 && Position.Y > PivotY + 100)
     {
         Key(bLeft ? EKeys::Left : EKeys::Right, false);
         Ball->GetBody()->OnComponentHit.RemoveDynamic(this, &ThisClass::ObserveHit);
