@@ -1,5 +1,20 @@
 # Quickstart and Validation Guide
 
+Phase 7 adds **Planetary Defense** to the default alien cabinet. Enter the green objective
+on the left side of the table, release keys, and confirm with Space/Enter. Move the mouse
+to aim and hold Space to launch interceptors; Escape pauses. Blue blasts last 1.4 active
+seconds. Protect three green colonies, but keep intercepting if they are destroyed: both
+outcomes run for the full 30 active seconds and return the same pinball after results.
+The independent `/Game/Tests/Maps/L_DefenseTest` harness selects Defense alone. Build, then
+run `./Scripts/Run-Phase7Validation.ps1` (or add `-FrameRate 30`) for rendered control and
+round-trip checks. See [Defense validation](validation/planetary-defense.md) for evidence.
+The production cabinet retains Asteroid Field and remains explicitly in development
+configuration until Alien Assault and the later full-integration phase are complete.
+
+After either minigame, the ball feeds toward the left flipper at a controlled speed.
+Release held arrows, then press Left as it approaches the paddle. If the primary release
+is obstructed, the backup feeds the right flipper. See [ball-return validation](validation/ball-return.md).
+
 Phase 6 adds the playable Asteroid Field to the default alien cabinet and an isolated
 `/Game/Tests/Maps/L_AsteroidTest` cabinet containing only that minigame. Start, launch and
 enter the circular objective. Release keys and confirm with Space/Enter, then use Left/Right

@@ -24,6 +24,8 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftObjectPtr<UInputMappingContext> InputContext;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftObjectPtr<UInputAction> ActionInput;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftClassPtr<UUserWidget> HUDClass;
+    /** Absolute-pointer games retain an uncaptured cursor during active play and resume. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) bool bUsesMouseAim = false;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FTransform ArenaTransform;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FVector ArenaExtent = FVector(500);
     UPROPERTY(EditAnywhere, BlueprintReadOnly) double DurationSeconds = 30;

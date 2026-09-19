@@ -8,6 +8,7 @@ import unreal
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from cabinet_lighting import apply_cabinet_lighting
+from cabinet_return import configure_return
 
 assets = unreal.EditorAssetLibrary
 tools = unreal.AssetToolsHelpers.get_asset_tools()
@@ -151,6 +152,7 @@ def table_defaults(cdo):
     cdo.set_editor_property("tuning", tuning)
     cdo.set_editor_property("ball_class", ball.generated_class())
     cdo.set_editor_property("require_complete_inventory", True)
+    configure_return(cdo)
 
 
 table_bp = bp(cabinet + "Blueprints/BP_AlienTable", "PinballTable", table_defaults)

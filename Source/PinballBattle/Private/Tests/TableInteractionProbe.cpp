@@ -204,7 +204,7 @@ void ATableInteractionProbe::Tick(float DeltaSeconds)
         {
             if (Table->GetRecoveryCount() != BeforeRecovery + 1 || EventIds.Num() != BeforeEvents)
             { Finish(false, TEXT("Escape/fallback recovery failed or awarded an event")); return; }
-            if (Fixture == 9 && Table->GetActorTransform().InverseTransformPosition(Table->GetBall()->GetActorLocation()).X > -150)
+            if (Fixture == 9 && FMath::Abs(Table->GetActorTransform().InverseTransformPosition(Table->GetBall()->GetActorLocation()).X - BackupPosition.X) > 1)
             { Finish(false, TEXT("Blocked primary did not use backup")); return; }
             StartFixture(Fixture + 1);
         }

@@ -122,7 +122,13 @@ bool UTableSessionComponent::PrepareRestore(FTableSuspendSnapshot& S)
     {
         if (B.Body == Table->GetBall()->GetBody())
         { B.Transform.SetLocation(Location); B.LinearVelocity = Velocity; B.AngularVelocityRadians = FVector::ZeroVector; B.bAwake = true; }
-else { B.LinearVelocity = FVector::ZeroVector; B.AngularVelocityRadians = FVector::ZeroVector; }
+        else
+        {
+            // Participant preparation may deliberately replace a captured actuator pose
+            // with its authored neutral pose. Preserve it when staging the body restore.
+            B.Transform = B.Body->GetComponentTransform();
+            B.LinearVelocity = FVector::ZeroVector; B.AngularVelocityRadians = FVector::ZeroVector;
+        }
         B.Body->SetWorldTransform(B.Transform, false, nullptr, ETeleportType::TeleportPhysics);
     }
     S.bPrepared = true; return true;

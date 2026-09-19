@@ -56,7 +56,7 @@ void UPinballPresentationWidget::NativeOnInitialized()
     Panel->SetContent(Column);
     AddLabel(Column, Heading, 28);
     Status = AddLabel(Column, FText::GetEmpty(), 23);
-    if (Screen >= EPinballScreen::Instructions) Status->SetWrapTextAt(420);
+    if (Screen >= EPinballScreen::Instructions) Status->SetWrapTextAt(StatusWrapWidth);
     if (Screen < EPinballScreen::Instructions) AddLabel(Column, FText::FromString(TEXT("LEFT / RIGHT  Flippers\nDOWN  Hold / release to launch\nESCAPE  Pause / resume")), 16);
     if (Screen == EPinballScreen::Recovery)
         AddButton(Column, FText::FromString(TEXT("Retry")), TEXT("RetryButton"))->OnClicked.AddDynamic(this, &ThisClass::RetryIntent);

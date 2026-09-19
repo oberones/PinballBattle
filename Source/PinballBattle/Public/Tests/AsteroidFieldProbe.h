@@ -1,8 +1,10 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Tests/FlipperReturnCheck.h"
 #include "AsteroidFieldProbe.generated.h"
 class AMinigameObjective;
+class UReturnBallProbe;
 /** Opt-in rendered acceptance harness using the production transition and real projectiles. */
 UCLASS()
 class PINBALLBATTLE_API AAsteroidFieldProbe : public AActor
@@ -32,9 +34,12 @@ private:
     FGuid SessionId;
     FGuid BallId;
     FVector FrozenBall;
+    FTransform SavedPrimaryReturn;
     bool bEnabled = false;
     bool bPaused = false;
     bool bInputChecked = false;
     bool bRightTurnChecked = false;
     bool bReboundChecked = false;
+    FFlipperReturnCheck ReturnControls;
+    UPROPERTY(Transient) TObjectPtr<UReturnBallProbe> ReturnBall;
 };
