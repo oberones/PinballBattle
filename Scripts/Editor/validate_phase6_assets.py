@@ -31,7 +31,8 @@ for prop in ("obstacle_class", "projectile_class", "destruction_sound"):
     assert root.get_editor_property(prop), prop
 for path in ("/Game/Tests/Data/DA_AsteroidTestCabinet", "/Game/Cabinets/AlienInvasion/Data/DA_AlienCabinet"):
     cabinet = load(path)
-    assert list(cabinet.get_editor_property("mini_games")) == [definition]
+    games = list(cabinet.get_editor_property("mini_games"))
+    assert games == [definition] if "DA_AsteroidTestCabinet" in path else definition in games
     assert cabinet.get_editor_property("development_without_minigames")
     rules = cabinet.get_editor_property("scoring_profile").get_editor_property("mini_game_rules")
     rule = next(r for r in rules if str(r.get_editor_property("profile_key")) == "AsteroidField")

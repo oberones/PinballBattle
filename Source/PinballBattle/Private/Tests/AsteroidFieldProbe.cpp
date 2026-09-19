@@ -1,4 +1,5 @@
 #include "Tests/AsteroidFieldProbe.h"
+#include "Tests/ReturnBallProbe.h"
 #include "Minigames/AsteroidField/AsteroidFieldRuntime.h"
 #include "Minigames/AsteroidField/AsteroidShipPawn.h"
 #include "Minigames/AsteroidField/AsteroidObstacle.h"
@@ -159,11 +160,37 @@ void AAsteroidFieldProbe::Tick(float DeltaSeconds)
             if (State->GetScoring()->GetTotalScore() != Baseline + Expected)
             { Finish(false, FString::Printf(TEXT("Award mismatch baseline=%lld expected=%lld actual=%lld award=%lld"), Baseline, Expected, State->GetScoring()->GetTotalScore(), Flow->GetTransition().Award.AwardedPoints)); return; }
             UE_LOG(LogPinballBattle, Display, TEXT("ASTEROID_ROUND cycle=%d kills=%d lives=%d duration=%.2f bonus=%lld"), Cycle, Kills, Runtime->GetLives(), Runtime->GetElapsed(), Expected);
+            if (Cycle == 1)
+            {
+                // Exercise a real backup release while leaving its authored feed untouched.
+                SavedPrimaryReturn = Table->PrimaryReturn->GetComponentTransform();
+                Table->PrimaryReturn->SetWorldLocation(Table->GetActorLocation());
+            }
             Stage = 4; return;
         }
     }
     if (Stage == 4 && Flow->GetCurrentState() == EArcadeGameFlowState::PINBALL_PLAYING)
     {
+        ReturnBall = NewObject<UReturnBallProbe>(this); ReturnBall->Begin(Table, GetWorld()->GetFirstPlayerController());
+        if (Cycle == 1) Table->PrimaryReturn->SetWorldTransform(SavedPrimaryReturn);
+        Stage = 5;
+    }
+    if (Stage == 5 && Flow->GetCurrentState() == EArcadeGameFlowState::PINBALL_PLAYING)
+    {
+        FString Failure;
+        const auto Check = ReturnBall->Tick(DeltaSeconds, Failure);
+        if (Check == UReturnBallProbe::EResult::Running) return;
+        if (Check == UReturnBallProbe::EResult::Failed) { Finish(false, Failure); return; }
+        Stage = 6; ReturnControls.Reset();
+    }
+    if (Stage == 6 && Flow->GetCurrentState() == EArcadeGameFlowState::PINBALL_PLAYING)
+    {
+        Table->GetBall()->SetActorLocation(Objective->GetActorLocation() + FVector(140, 0, 0), false, nullptr, ETeleportType::TeleportPhysics);
+        Table->GetBall()->GetBody()->SetPhysicsLinearVelocity(FVector::ZeroVector);
+        FString Failure;
+        const auto Check = ReturnControls.Tick(Table, GetWorld()->GetFirstPlayerController(), DeltaSeconds, Failure);
+        if (Check == FFlipperReturnCheck::EResult::Running) return;
+        if (Check == FFlipperReturnCheck::EResult::Failed) { Finish(false, Failure); return; }
         if (++Cycle == 2) { Finish(true, TEXT("Input, rebound, pause, projectiles, both endings, score and same-ball return")); return; }
         Stage = 1; Wait = 0;
     }

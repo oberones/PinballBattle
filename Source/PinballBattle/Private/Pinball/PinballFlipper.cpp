@@ -71,9 +71,12 @@ bool APinballFlipper::PrepareRestore(int64 Generation)
     SetHeld(false); Body->SetWorldTransform(NeutralTransform, false, nullptr, ETeleportType::TeleportPhysics);
     return bSuspended && Generation > 0;
 }
-// Restore only the neutral motor target after all table participants have acknowledged readiness.
+// Rebuild the hinge against the restored Chaos body before re-enabling its neutral motor.
 void APinballFlipper::CommitRestore(int64 Generation)
 {
+    // Suspension recreates body physics through collision/simulation changes. A surviving
+    // constraint handle alone does not mean its joint is still driving the dynamic body.
+    Hinge->InitComponentConstraint();
     bSuspended = false; Hinge->SetOrientationDriveTwistAndSwing(true, false);
     Hinge->SetAngularVelocityDriveTwistAndSwing(true, false); SetHeld(false);
 }

@@ -76,6 +76,9 @@ this AlienInvasion asset.
 
 - MiniGameId, display name, soft UWorld reference, expected runtime subclass.
 - Mode input mapping context, instructions, presentation/widget class references.
+- Optional `bUsesMouseAim` (default false) selects a visible absolute cursor and viewport
+  focus during active play/resume; the controller remains the input-mode owner. Each
+  definition supplies its own HUD, with the cabinet's shared HUD as fallback.
 - Duration =30 active seconds, optional local lives =3, run pawn class/config and arena bounds.
 - Scoring profile key, allowed result-multiplier range (default only 1), configured metric
   keys and bounds. Per-game difficulty settings reside on its Blueprint defaults or a small

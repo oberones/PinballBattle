@@ -34,6 +34,8 @@ public:
     void ShowMiniGameStatus(const FText& Text);
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) EPinballScreen Screen = EPinballScreen::HUD;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) FText Heading;
+    /** Content can reserve a narrow status column beside an arena without covering targets. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) float StatusWrapWidth = 420;
 private:
     /** Create a readable label in the menu column without a per-frame binding. */
     UTextBlock* AddLabel(UVerticalBox* Column, const FText& Text, int32 Size);

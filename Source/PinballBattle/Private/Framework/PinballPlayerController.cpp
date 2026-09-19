@@ -186,6 +186,10 @@ void APinballPlayerController::RefreshPresentation(const FSessionState& State)
     if (State.FlowState == EArcadeGameFlowState::MINIGAME_TRANSITION && Flow->GetTransition().Phase == ETransitionPhase::RecoveryMenu) Class = Cabinet->RecoveryWidget;
     if (State.FlowState == EArcadeGameFlowState::BOOT && Flow->HasBootFailed()) Class = Cabinet->RecoveryWidget;
     if (State.FlowState == EArcadeGameFlowState::MINIGAME_PLAYING) Class = Cabinet->MiniGameHUDWidget;
+    const auto* ActiveDefinition = GetWorld()->GetSubsystem<UMinigameWorldSubsystem>()->GetActiveRun().Definition.Get();
+    if (State.FlowState == EArcadeGameFlowState::MINIGAME_PLAYING && ActiveDefinition &&
+        ActiveDefinition->HUDClass.Get() && ActiveDefinition->HUDClass.Get()->IsChildOf(UPinballPresentationWidget::StaticClass()))
+        Class = ActiveDefinition->HUDClass.Get();
     if (State.FlowState == EArcadeGameFlowState::MINIGAME_RESULTS) Class = Cabinet->ResultsWidget;
     if (!Class) Class = Cabinet->HUDWidget;
     if (!Presentation || Presentation->GetClass() != Class)
@@ -197,8 +201,17 @@ void APinballPlayerController::RefreshPresentation(const FSessionState& State)
     if (State.FlowState == EArcadeGameFlowState::PAUSED) DisableMiniGameInput();
     if (Previous == EArcadeGameFlowState::PAUSED && State.FlowState == EArcadeGameFlowState::MINIGAME_PLAYING)
         EnableMiniGameInput(GetWorld()->GetSubsystem<UMinigameWorldSubsystem>()->GetActiveRun().Definition);
-    bShowMouseCursor = !bGameplay && State.FlowState != EArcadeGameFlowState::MINIGAME_PLAYING;
-    if (bGameplay || State.FlowState == EArcadeGameFlowState::MINIGAME_PLAYING) SetInputMode(FInputModeGameOnly());
+    const bool PointerPlay = State.FlowState == EArcadeGameFlowState::MINIGAME_PLAYING && ActiveDefinition && ActiveDefinition->bUsesMouseAim;
+    bShowMouseCursor = PointerPlay || (!bGameplay && State.FlowState != EArcadeGameFlowState::MINIGAME_PLAYING);
+    if (PointerPlay)
+    {
+        FInputModeGameAndUI InputMode;
+        InputMode.SetHideCursorDuringCapture(false);
+        InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::LockAlways);
+        SetInputMode(InputMode);
+        if (FSlateApplication::IsInitialized()) FSlateApplication::Get().SetAllUserFocusToGameViewport();
+    }
+    else if (bGameplay || State.FlowState == EArcadeGameFlowState::MINIGAME_PLAYING) SetInputMode(FInputModeGameOnly());
     else
     {
         FInputModeGameAndUI InputMode;

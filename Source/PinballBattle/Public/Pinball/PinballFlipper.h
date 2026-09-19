@@ -17,7 +17,7 @@ public:
     virtual bool SuspendForMinigame(int64 Generation) override;
     /** Stage a neutral authored pose while motors and simulation remain disabled. */
     virtual bool PrepareRestore(int64 Generation) override;
-    /** Reenable the configured neutral drive at the table's commit boundary. */
+    /** Rebuild the joint against the restored body and reenable its neutral drive at commit. */
     virtual void CommitRestore(int64 Generation) override;
     APinballFlipper();
     void Configure(UPinballTuningData* Tuning);
