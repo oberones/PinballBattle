@@ -98,7 +98,7 @@ Do not substitute a successful documentation check for this build evidence.
 | M5 | /Game/Tests/Maps/L_TransitionTest | Trigger test stub from real table; return with one award and unchanged ball count |
 | M6 | L_TransitionTest selecting Asteroid definition | Rotate/thrust/fire, timeout and life exhaustion; return to table |
 | M7 | Same harness selecting Defense definition | Mouse aim/Space intercept, colony loss, full timer even with zero colonies |
-| M8 | Same harness selecting Assault definition | Horizontal fire/dodge, destruction/survival score, both end conditions |
+| M8 | /Game/Tests/Maps/L_AssaultTest | Left/Right move, Space fire/dodge; timeout/lives loss, destruction/survival score and same-ball return; [executed evidence](validation/alien-assault.md) |
 | M9 | L_AlienCabinet | Three real objectives; full-session and failure/pause/race regression |
 | M10 | Themed L_AlienCabinet | Objective/UI readability, original assets, local FX/audio and collision regression |
 | M11 | Packaged game on reference desktop | All measurable outcomes and first-time playtests |

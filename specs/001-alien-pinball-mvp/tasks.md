@@ -206,13 +206,13 @@ absent from the test cabinet.
 **Dependencies**: Phase 5 only. **Independent test**: Timeout/lives-loss runs and return with
 correct destruction/survival rewards and no dependencies on other games.
 
-- [ ] T083 [US5] Implement Source/PinballBattle/Private/Minigames/AlienAssault/AlienAssaultRuntime.cpp with owned formation/waves, three lives, protected respawn, timeout success and enemy/survival result metrics.
-- [ ] T084 [P] [US5] Implement bounded Left/Right movement and Space requests in Source/PinballBattle/Private/Minigames/AlienAssault/AssaultShipPawn.cpp (after T083).
-- [ ] T085 [P] [US5] Implement moving/firing enemies, swept projectiles and once-only damage/destruction in Source/PinballBattle/Private/Minigames/AlienAssault/AssaultEnemy.cpp and AssaultProjectile.cpp in that directory (after T083; independent of T084).
-- [ ] T086 [US5] Integrate waves, one-life-per-hit, respawn immunity and >=28 attainable kills per 30 seconds in Source/PinballBattle/Private/Minigames/AlienAssault/AlienAssaultRuntime.cpp; close local damage before result and never change pinball balls.
-- [ ] T087 [US5] Author Content/Minigames/AlienAssault/Blueprints/BP_AlienAssaultRuntime.uasset, BP_AssaultShip.uasset, BP_AssaultEnemy.uasset and BP_AssaultProjectile.uasset in that directory plus Content/Minigames/AlienAssault/Maps/L_MG_AlienAssault.umap with original visuals, bounded arena and explicit root/camera.
-- [ ] T088 [US5] Author Content/Minigames/AlienAssault/Data/DA_MG_AlienAssault.uasset, Content/Minigames/AlienAssault/Input/IMC_AlienAssault.uasset and Content/Tests/Data/DA_AssaultTestCabinet.uasset; configure HUD/controls, visible and audible feedback for each accepted enemy destruction, and bonuses 4 kills/10 seconds→2,000, 28/30→10,000, then serialize association into Content/Cabinets/AlienInvasion/Data/DA_AlienCabinet.uasset.
-- [ ] T089 [US5] Verify movement, enemy/player fire, visible and audible scoring feedback for accepted enemy destructions, lives/immunity, both endings, score examples and safe return with siblings absent; record specs/001-alien-pinball-mvp/validation/alien-assault.md.
+- [X] T083 [US5] Implement Source/PinballBattle/Private/Minigames/AlienAssault/AlienAssaultRuntime.cpp with owned formation/waves, three lives, protected respawn, timeout success and enemy/survival result metrics.
+- [X] T084 [P] [US5] Implement bounded Left/Right movement and Space requests in Source/PinballBattle/Private/Minigames/AlienAssault/AssaultShipPawn.cpp (after T083).
+- [X] T085 [P] [US5] Implement moving/firing enemies, swept projectiles and once-only damage/destruction in Source/PinballBattle/Private/Minigames/AlienAssault/AssaultEnemy.cpp and AssaultProjectile.cpp in that directory (after T083; independent of T084).
+- [X] T086 [US5] Integrate waves, one-life-per-hit, respawn immunity and >=28 attainable kills per 30 seconds in Source/PinballBattle/Private/Minigames/AlienAssault/AlienAssaultRuntime.cpp; close local damage before result and never change pinball balls.
+- [X] T087 [US5] Author Content/Minigames/AlienAssault/Blueprints/BP_AlienAssaultRuntime.uasset, BP_AssaultShip.uasset, BP_AssaultEnemy.uasset and BP_AssaultProjectile.uasset in that directory plus Content/Minigames/AlienAssault/Maps/L_MG_AlienAssault.umap with original visuals, bounded arena and explicit root/camera.
+- [X] T088 [US5] Author Content/Minigames/AlienAssault/Data/DA_MG_AlienAssault.uasset, Content/Minigames/AlienAssault/Input/IMC_AlienAssault.uasset and Content/Tests/Data/DA_AssaultTestCabinet.uasset; configure HUD/controls, visible and audible feedback for each accepted enemy destruction, and bonuses 4 kills/10 seconds→2,000, 28/30→10,000, then serialize association into Content/Cabinets/AlienInvasion/Data/DA_AlienCabinet.uasset.
+- [X] T089 [US5] Verify movement, enemy/player fire, visible and audible scoring feedback for accepted enemy destructions, lives/immunity, both endings, score examples and safe return with siblings absent; record specs/001-alien-pinball-mvp/validation/alien-assault.md.
 
 **Checkpoint**: All three games use one lifecycle, transition and scoring boundary.
 

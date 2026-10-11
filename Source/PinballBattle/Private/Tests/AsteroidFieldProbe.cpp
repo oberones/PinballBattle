@@ -13,6 +13,7 @@
 #include "Pinball/PinballBall.h"
 #include "Pinball/MinigameTriggerComponent.h"
 #include "Components/SphereComponent.h"
+#include "Components/InputComponent.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "InputKeyEventArgs.h"
